@@ -2,12 +2,22 @@ import typer
 import requests
 import os
 import sqlite3
+import aiohttp
+import httpx
+import asyncio 
+from async_typer import AsyncTyper
 
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.console import Console
-from rich.live import Live, live_table
+from rich.live import Live 
 from rich.spinner import Spinner
-cli = typer.Typer()
+
+import ascii_magic
+
+cli = AsyncTyper()
+console = Console()
+
+timeout = httpx.Timeout(15.0, connect=15.0)
 
 class Dinosaur:
     def __init__(self, response):
@@ -77,22 +87,23 @@ def image_write(img_path:str, img_url:str)->int:
         
     return pic_res.status_code
 
-@cli.command(name="collect", help="Collect a new Dinosaur!")
-def collect(count=1):
-    spin = Spinner(name="Looking for dinos...", style=)
-    with :
-        x = requests.get(url="https://restasaurus.onrender.com/api/v1/dinosaurs/random/1")
-        dino_son =  x.json()
-        dino_obj = Dinosaur(dino_son)
+@cli.async_command(name="collect", help="Collect a new Dinosaur!")
+async def collect(count=1):
+    # spin = Spinner(name="Looking for dinos...", style="dots")
+    async with httpx.AsyncClient() as client:
+        with console.status("Looking for dinos...", spinner_style="bouncing ball"):
+            x = await client.get(url="https://restasaurus.onrender.com/api/v1/dinosaurs/random/1")
+            dino_son =  x.json()
+            dino_obj = Dinosaur(dino_son)
     
     print(dino_obj.name)
     print(dino_obj.description)
-    print(dino_obj.imageURL)
     
     name = os.path.basename(dino_obj.imageURL)
     path = f"src/images/{name}"
     r = image_write(path, dino_obj.imageURL)
-
+    ascii_dino = ascii_magic.from_image(path)
+    ascii_dino.to_terminal()
         
         
     # return dino_obj
