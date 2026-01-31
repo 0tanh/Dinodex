@@ -1,0 +1,16 @@
+click==8.3.1
+linkify-it-py==2.0.3
+markdown-it-py==4.0.0
+mdit-py-plugins==0.5.0
+mdurl==0.1.2
+nuitka==2.8.10
+ordered-set==4.1.0
+platformdirs==4.5.1
+pygments==2.19.2
+rich==14.3.1
+shellingham==1.5.4
+textual==7.5.0
+typer==0.21.1
+typing-extensions==4.15.0
+uc-micro-py==1.0.3
+zstandard==0.25.0
