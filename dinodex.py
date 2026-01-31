@@ -4,7 +4,7 @@ from src.gui.gui_main import Dinodex
 
 @cli.command(name="gui", help="render a gui with this")
 def gui_run():
-    app = ProvingThisWorks()
+    app = Dinodex()
     app.run()
 
 if __name__ == "__main__":
