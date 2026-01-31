@@ -1,8 +1,11 @@
-python3 -m nuitka main.py --mode=standalone \
+python3 -m nuitka dinodex.py --mode=standalone \
 --follow-imports \
---output-filename=dino_test \
+--output-filename=dinodex \
+--output-foldername=dinodex\
 --show-memory \
 --company-name=0tanhDSP\
 --file-description= "A tiny app for collecting random dinosaurs"\
---run
+--run \;
+
+
 # --include-data-dir=src/images \
