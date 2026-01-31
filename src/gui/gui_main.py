@@ -8,7 +8,7 @@ from ..cli.cli_main import hello_world
 
 gui = App()
 
-class ProvingThisWorks(App): 
+class Dinodex(App): 
     def compose(self):
         yield Header()
         yield Static("Hi betty <3")

@@ -1,4 +1,5 @@
+
 CREATE TABLE compile_test (
-    name INT PRIMARY KEY,
+    id NOT_NULL PRIMARY KEY AUTO_INCREMENT,
     description TEXT,
     imageURL TEXT);

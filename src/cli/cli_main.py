@@ -1,6 +1,8 @@
 import typer
 import requests
 import os
+import sqlite3
+
 
 cli = typer.Typer()
 
@@ -44,13 +46,13 @@ def dinosaur(count=1):
     print(dino_obj.description)
     print(dino_obj.image)
     
-    # dino_pic = requests.get(dino_obj.image)
-    # if dino_pic.status_code == 200:
-    #     #TODO change this
-    #     name = os.path.basename(dino_obj.image)
+    dino_pic = requests.get(dino_obj.image)
+    if dino_pic.status_code == 200:
+        #TODO change this
+        name = os.path.basename(dino_obj.image)
         
-    #     with open(f"src/images/{name}", "wb") as f:
-    #         f.write(dino_pic.content)
+        with open(f"src/images/{name}", "wb") as f:
+            f.write(dino_pic.content)
         
         
         
