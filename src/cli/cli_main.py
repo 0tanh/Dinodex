@@ -10,7 +10,10 @@ class Dinosaur:
     def __init__(self, response):
         self.name = response["data"][0]["name"]
         self.description = response["data"][0]["description"]
-        self.image = response["data"][0]["image"]["imageURL"]
+        self.imageURL = response["data"][0]["image"]["imageURL"]
+        self.period = response["data"][0]["temporalRange"]
+        self.movement = response["data"][0]["locomotionType"]
+        
     
     # {
     #   "count": 5,
@@ -44,12 +47,12 @@ def dinosaur(count=1):
     
     print(dino_obj.name)
     print(dino_obj.description)
-    print(dino_obj.image)
+    print(dino_obj.imageURL)
     
-    dino_pic = requests.get(dino_obj.image)
+    dino_pic = requests.get(dino_obj.imageURL)
     if dino_pic.status_code == 200:
         #TODO change this
-        name = os.path.basename(dino_obj.image)
+        name = os.path.basename(dino_obj.imageURL)
         
         with open(f"src/images/{name}", "wb") as f:
             f.write(dino_pic.content)
