@@ -3,6 +3,7 @@ import httpx
 from dotenv import load_dotenv
 import datetime
 import faker
+import typer
 
 from PIL import UnidentifiedImageError
 
@@ -57,9 +58,13 @@ def initialise():
 
 
 @cli.async_command(name="collect", help="Collect a new Dinosaur!")
-async def collect(gui:Annotated()):
+async def collect(gui:Annotated[bool, typer.Option(help="Explore collection with a GUI")]= False):
     """Collect a dinosaur!"""
     # spin = Spinner(name="Looking for dinos...", style="dots")
+    if gui:
+        
+        ...
+    
     path_to_db = which_path_to_db()
     
     try:
