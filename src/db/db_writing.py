@@ -3,6 +3,8 @@ import os
 from dotenv import load_dotenv
 import requests
 
+from dino_classes import Dinosaur
+
 def image_write(img_path:str, img_url:str)->int:
     """Image Writing function
     
@@ -37,6 +39,19 @@ def which_path_to_db()->str:
         path_to_db = os.path.expanduser(p)
         return path_to_db
 
+def which_path_to_images(img_url:str)->str:
+    """Where Images are being written to! should be different for binary vs dev"""
+    load_dotenv()
+    name = os.path.basename(img_url)
+    path_env = os.getenv("PATH_TO_IMG")
+    if path_env:
+        path_to_img = f"{path_env}{name}"
+        return path_to_img
+    else:
+        p = "~/Dinodex/images/"
+        path_to_img = f"{os.path.expanduser(p)}{name}"
+        return path_to_img
+
 def db_build(path_to_db:str, path_to_schema:str):
     """builds database"""
     if os.path.exists(path_to_db):
@@ -70,7 +85,22 @@ def log_req(request, response, status, url, elapsed, collected_date, path_to_db)
         curr.execute("INSERT INTO requests VALUES (?, ?, ?, ?, ?, ?)", params)
         curr.close()
 
-def new_dino()
+def new_dino(dino:Dinosaur, path_to_db, img_path):
+    with open(img_path, "rb") as img:
+        image_bytes = img.read()
+    with sqlite3.connect(path_to_db) as conn:
+        curr = conn.cursor()
+        
+        myDino_params = (dino.name, 
+            dino.species, 
+            image_bytes, 
+            dino.imageURL, 
+            dino.description, 
+            dino.collected_date)
+        
+        curr.execute("INSERT INTO myDinos VALUES (?, ?, ?, ?, ?, ?)", myDino_params)
+        
+        curr.close()
 
 def last_dino():
     """get the last dino added to the database"""
