@@ -1,5 +1,5 @@
 class Dinosaur:
-    def __init__(self, response, name, time):
+    def __init__(self, response, name:str, time:str):
         self.name = name
         self.collected_date = time
         self.species = response["data"][0]["name"]

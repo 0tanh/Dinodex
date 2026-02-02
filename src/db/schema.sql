@@ -9,15 +9,15 @@ CREATE TABLE requests (
 
 CREATE TABLE myDinos (
     name TEXT UNIQUE NOT NULL PRIMARY KEY,
-    species TEXT,
+    species TEXT UNIQUE,
     image BLOB,
     imageURL TEXT,
-    description TEXT UNIQUE NOT NULL,
+    description TEXT NOT NULL,
     collected_date TEXT
 );
 
 CREATE TABLE allDinos (
-    name TEXT UNIQUE NOT NULL PRIMARY KEY,
+    species TEXT UNIQUE PRIMARY KEY,
     copies INT,
     rare BOOL,
     collected_date TEXT

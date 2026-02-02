@@ -2,8 +2,13 @@ import sqlite3
 import os
 from dotenv import load_dotenv
 import requests
+import ascii_magic
+from PIL import UnidentifiedImageError
+
+from src.assets.no_dino import NO_DINO, NO_DINO_ASCII
 
 from .dino_classes import Dinosaur
+
 
 def image_write(img_path:str, img_url:str)->int:
     """Image Writing function
@@ -106,12 +111,49 @@ def new_dino(dino:Dinosaur, path_to_db, img_path, img_response):
             dino.description, 
             dino.collected_date)
         
-        curr.execute("INSERT INTO myDinos VALUES (?, ?, ?, ?, ?, ?)", myDino_params)
-        
+        try:
+            curr.execute("INSERT INTO myDinos VALUES (?, ?, ?, ?, ?, ?)", myDino_params)
+            allDino_params = (
+                dino.species,
+                1,
+                True,
+                dino.collected_date
+            ) 
+            curr.execute("INSERT INTO allDinos VALUES (?, ?, ?, ?)", allDino_params)
+        except sqlite3.IntegrityError:
+            allDino_params = (
+                False,
+                dino.species
+            )
+            curr.execute("UPDATE allDinos SET rare = ?, copies = copies + 1 WHERE species = ?", allDino_params)
         curr.close()
 
 def last_dino():
     """get the last dino added to the database"""
+
+def ascii_dino_from_url(img_path:str, img_url:str):
+    """
+    Ascii art of a dinosaur 
+    
+    Args:
+        img_path (str) : path that image will write to
+        img_url (str) : url of image
+    Return
+        AsciiArt : ascii art of a dino
+    """
+    img_response = image_write(img_path, img_url)
+    match img_response:
+        case 200:
+            try:
+                ascii_dino = ascii_magic.from_image(img_path)
+                return ascii_dino
+            except UnidentifiedImageError:
+                return NO_DINO_ASCII 
+        case 404:
+            return NO_DINO_ASCII
+        case _:
+            return NO_DINO_ASCII
+            
 
 
 if __name__ == "__main__":

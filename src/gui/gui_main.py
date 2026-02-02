@@ -1,4 +1,3 @@
-from tkinter import image_names
 import httpx
 import textual
 import typer
@@ -8,11 +7,13 @@ from textual.app import App, ComposeResult
 from textual.containers import Grid, ItemGrid
 from textual.widgets import Button, Footer, Header, Static
 from textual_image.widget.sixel import Image
+import ascii_magic
 
 from rich.console import Console
 
 from ..cli.cli_main import collect
-from ..widget.Dino_Widgets import Dino_Info, Dino_Pic, MatrixNoise
+from ..widget.Dino_Widgets import Dino_Info, Dino_Info_Reactive, Dino_Pic, MatrixNoise, Dino_Ascii, Dino_Ascii_Reactive
+from ..db.writing import ascii_dino_from_url, which_path_to_images
 
 class Dinodex(App):
     
@@ -22,8 +23,9 @@ class Dinodex(App):
     def compose(self):
         yield Header()
         with Grid():
+            yield Dino_Ascii_Reactive(id="DinoScii")
             yield Button("collect!", name="Collect", id="CollectButton")
-            yield Dino_Info(None, id="Dino_Info")
+            yield Dino_Info_Reactive(None, id="Dino_Info")
             # yield Dino_Pic(id="Dino_Pic")
         yield Footer()
         
@@ -33,16 +35,25 @@ class Dinodex(App):
     async def collect_callback(self):
         async with httpx.AsyncClient():
             dino = await collect()
-
+        
         dino_info = self.query_one("#Dino_Info")
         dino_info.dino_name = dino.name
         dino_info.dino_species = dino.species
         dino_info.dino_description = dino.description
         dino_info.dino_period = dino.period
         dino_info.dino_movement = dino.movement
+        
+        dino_url = dino.imageURL
+        
+        img_path = which_path_to_images(dino_url)
+        dino_ascii_obj = ascii_dino_from_url(img_path, dino_url)
+        
+        dino_ascii_raw = dino_ascii_obj.to_ascii(columns=120,
+                                            enhance_image = True)
+        
+        dino_scii = self.query_one("#DinoScii")
+        dino_scii.dino_ascii = dino_ascii_raw
 
-        dino_pic = self.query_one("#Dino_Pic")
-        dino_pic.dino_pic = dino.imageURL
 
 
 if __name__ == "__main__":

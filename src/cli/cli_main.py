@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 import datetime
 import faker
 import typer
+import nest_asyncio
 
 from PIL import UnidentifiedImageError
 
@@ -18,18 +19,23 @@ from rich.spinner import Spinner
 
 import ascii_magic
 
+from src.gui.gui_collect import Dinodex_Collect
+
 from ..db.writing import (db_build, 
     log_req, 
     which_path_to_db, 
     which_path_to_images,
     image_write,
-    new_dino
+    new_dino,
+    ascii_dino_from_url
     )
 
 from ..db.dino_classes import Dinosaur
 
-load_dotenv()
+from ..assets.no_dino import NO_DINO
 
+load_dotenv()
+nest_asyncio.apply()
 cli = AsyncTyper()
 console = Console()
 fake = faker.Faker()
@@ -39,6 +45,8 @@ timeout = httpx.Timeout(30.0, connect=30.0)
 
 @cli.command(name="init", help="Start Your Dino Journey!")
 def initialise():
+    """Rebuilds Database from scratch and initialises your user"""
+    
     load_dotenv()
     #TODO customise location of db_path
     
@@ -61,15 +69,11 @@ def initialise():
 async def collect(gui:Annotated[bool, typer.Option(help="Explore collection with a GUI")]= False):
     """Collect a dinosaur!"""
     # spin = Spinner(name="Looking for dinos...", style="dots")
-    if gui:
-        
-        ...
     
     path_to_db = which_path_to_db()
-    
-    try:
-        async with httpx.AsyncClient() as client:
-            with console.status("Looking for dinos...", spinner_style="bouncing ball"):
+    if gui:
+        try:
+            async with httpx.AsyncClient() as client:
                 x = await client.get(url="https://restasaurus.onrender.com/api/v1/dinosaurs/random/1")
                 
                 request = x.request.read()
@@ -77,42 +81,78 @@ async def collect(gui:Annotated[bool, typer.Option(help="Explore collection with
                 response_status = x.status_code
                 url = x.url.path
                 elapsed = x.elapsed
-                collected_date = datetime.datetime.now().isoformat()
-                
-                name = f"{fake.first_name_female()} from {fake.company}"
-                
-                log_req(request, response, response_status, url, 
-                    str(elapsed),collected_date,path_to_db)
-                
-                
-                dino_son =  x.json()
-                dino_obj = Dinosaur(dino_son, name, collected_date)
-        img_path = which_path_to_images(dino_obj.imageURL)
-                
-        img_response = image_write(img_path, dino_obj.imageURL)
+            collected_date = datetime.datetime.now().isoformat()
+            name = f"{fake.first_name_female()} from {fake.company()}"
+            
+            log_req(request, response, response_status, url, 
+                str(elapsed),collected_date,path_to_db)
+            dino_son =  x.json()
+            dino_obj = Dinosaur(dino_son, name, collected_date)
+            img_path = which_path_to_images(dino_obj.imageURL)
+            
+            img_response = image_write(img_path, dino_obj.imageURL)
+            
+            new_dino(dino_obj, path_to_db, img_path, img_response)
+                      
+            dino_ascii = ascii_dino_from_url(img_path=img_path, img_url=dino_obj.imageURL)
+            gui_collect = Dinodex_Collect(dino_obj, dino_ascii)
+            gui_collect.run()
+            return dino_obj
         
-        new_dino(dino_obj, path_to_db, img_path, img_response)
-        
-        print(dino_obj.name)
-        print(dino_obj.description)
-        
-        match img_response:
-            case 200:
-                try:
-                    ascii_dino = ascii_magic.from_image(img_path)
-                except UnidentifiedImageError:
-                    ascii_dino = ascii_magic.from_image("src/assets/missing_dino.png")
-                with Live(console=console, refresh_per_second=0.5):
-                    console.print(ascii_dino.to_ascii(enhance_image=True))
-                return dino_obj
-            case 404:
-                print("We couldn't find a picture of this dino...")
-        
-        return dino_obj
-               
-    except httpx.ReadTimeout:
-        print("Search unsuccessful...")
-        return "Search unsuccessful"
+        except httpx.ReadTimeout:
+            print("Search unsuccessful...")
+            dino_obj = NO_DINO
+            img_path = which_path_to_images(dino_obj.imageURL)
+            dino_ascii = ascii_dino_from_url(img_path=img_path, img_url=dino_obj.imageURL)
+            gui_collect = Dinodex_Collect(dino_obj, dino_ascii)
+            
+            gui_collect.run()
+    else:
+        try:
+            async with httpx.AsyncClient() as client:
+                with console.status("Looking for dinos...", spinner_style="bouncing ball"):
+                    x = await client.get(url="https://restasaurus.onrender.com/api/v1/dinosaurs/random/1")
+                    
+                    request = x.request.read()
+                    response = x.content
+                    response_status = x.status_code
+                    url = x.url.path
+                    elapsed = x.elapsed
+                    collected_date = datetime.datetime.now().isoformat()
+                    
+                    name = f"{fake.first_name_female()} from {fake.company()}"
+                    
+                    log_req(request, response, response_status, url, 
+                        str(elapsed),collected_date,path_to_db)
+                    
+                    
+                    dino_son =  x.json()
+                    dino_obj = Dinosaur(dino_son, name, collected_date)
+            img_path = which_path_to_images(dino_obj.imageURL)
+            
+            print(dino_obj.name)
+            print(dino_obj.description)
+            
+            img_response = image_write(img_path, dino_obj.imageURL)
+            match img_response:
+                case 200:
+                    try:
+                        ascii_dino = ascii_magic.from_image(img_path)
+                    except UnidentifiedImageError:
+                        ascii_dino = ascii_magic.from_image("src/assets/missing_dino.png")
+                    with Live(console=console, refresh_per_second=0.5):
+                        console.print(ascii_dino.to_ascii(enhance_image=True))
+                case 404:
+                    print("We couldn't find a picture of this dino...")
+            
+            new_dino(dino_obj, path_to_db, img_path, img_response)
+                
+            return dino_obj
+                
+        except httpx.ReadTimeout:
+            print("Search unsuccessful...")
+            return NO_DINO
+
 
 @cli.command(name="config", help="Configure your Dino collection")
 def config():
@@ -122,7 +162,7 @@ def config():
 def gallery():
     ...
 
-@cli.command(name="view", help="View your dinos")
+@cli.command(name="mydino", help="View your dinos")
 def view():
     ...
 
@@ -130,3 +170,10 @@ def view():
 def dinofight():
     ...
 
+@cli.command(name="export", help="Export your dinodex!")
+def exportDinodex():
+    ...
+
+@cli.command(name="import", help="Import a dinodex!")
+def importDinodex():
+    ...
