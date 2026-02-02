@@ -1,5 +1,4 @@
 from typing import Annotated
-import asyncio
 from src.cli.cli_main import cli
 from src.gui.gui_main import Dinodex 
 

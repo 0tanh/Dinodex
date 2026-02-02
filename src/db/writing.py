@@ -9,6 +9,35 @@ from src.assets.no_dino import NO_DINO, NO_DINO_ASCII
 
 from .dino_classes import Dinosaur
 
+class DBWriteError(Exception):
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
+
+
+def write_permission_check(path_to_db):
+    """Diagnostic test to check if this place has write permissions
+
+    Args:
+        path_to_db (str): path to the database we are testing
+    """
+    with sqlite3.connect(path_to_db) as conn:
+        curr = conn.cursor()
+        try:
+            curr.execute("CREATE TABLE permission_check ('check' BOOL)")
+            curr.execute("SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='table' AND name='permission_check')")
+
+            r = curr.fetchall()
+            if r[0][0] == 1:
+                curr.execute("DROP TABLE permission_check")
+                return True
+            else:
+                return False
+        except sqlite3.OperationalError as e:
+            print(f"Error {e} occurred")
+        curr.close()
+        return False
+    
 
 def image_write(img_path:str, img_url:str)->int:
     """Image Writing function
@@ -99,7 +128,8 @@ def new_dino(dino:Dinosaur, path_to_db, img_path, img_response):
         case _:
             with open("src/assets/missing_dino.png") as img:
                 image_bytes = img.read()
-                
+    
+    os.remove(img_path)            
     
     with sqlite3.connect(path_to_db) as conn:
         curr = conn.cursor()

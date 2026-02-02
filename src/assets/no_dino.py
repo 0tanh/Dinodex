@@ -1,4 +1,7 @@
 import ascii_magic
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from ..db.dino_classes import Dinosaur
 

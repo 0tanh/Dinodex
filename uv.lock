@@ -270,6 +270,7 @@ dependencies = [
     { name = "mdurl" },
     { name = "multidict" },
     { name = "names" },
+    { name = "nest-asyncio" },
     { name = "nuitka" },
     { name = "ordered-set" },
     { name = "pillow" },
@@ -281,6 +282,7 @@ dependencies = [
     { name = "rich" },
     { name = "shellingham" },
     { name = "textual" },
+    { name = "textual-image" },
     { name = "typer" },
     { name = "typing-extensions" },
     { name = "uc-micro-py" },
@@ -314,6 +316,7 @@ requires-dist = [
     { name = "mdurl", specifier = "==0.1.2" },
     { name = "multidict", specifier = "==6.7.1" },
     { name = "names", specifier = "==0.3.0" },
+    { name = "nest-asyncio", specifier = "==1.6.0" },
     { name = "nuitka", specifier = "==2.8.10" },
     { name = "ordered-set", specifier = "==4.1.0" },
     { name = "pillow", specifier = "==12.1.0" },
@@ -325,6 +328,7 @@ requires-dist = [
     { name = "rich", specifier = "==14.3.1" },
     { name = "shellingham", specifier = "==1.5.4" },
     { name = "textual", specifier = "==7.5.0" },
+    { name = "textual-image", specifier = "==0.8.5" },
     { name = "typer", specifier = "==0.21.1" },
     { name = "typing-extensions", specifier = "==4.15.0" },
     { name = "uc-micro-py", specifier = "==1.0.3" },
@@ -647,6 +651,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/44/4e/f9cb7ef2df0250f4ba3334fbdabaa94f9c88097089763d8e85ada8092f84/names-0.3.0.tar.gz", hash = "sha256:726e46254f2ed03f1ffb5d941dae3bc67c35123941c29becd02d48d0caa2a671", size = 789099, upload-time = "2013-05-14T14:55:49.073Z" }
 
 [[package]]
+name = "nest-asyncio"
+version = "1.6.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/83/f8/51569ac65d696c8ecbee95938f89d4abf00f47d58d48f6fbabfe8f0baefe/nest_asyncio-1.6.0.tar.gz", hash = "sha256:6f172d5449aca15afd6c646851f4e31e02c598d553a667e38cafa997cfec55fe", size = 7418, upload-time = "2024-01-21T14:25:19.227Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a0/c4/c2971a3ba4c6103a3d10c4b0f24f461ddc027f0f09763220cf35ca1401b3/nest_asyncio-1.6.0-py3-none-any.whl", hash = "sha256:87af6efd6b5e897c81050477ef65c62e2b2f35d51703cae01aff2905b1852e1c", size = 5195, upload-time = "2024-01-21T14:25:17.223Z" },
+]
+
+[[package]]
 name = "nuitka"
 version = "2.8.10"
 source = { registry = "https://pypi.org/simple" }
@@ -897,6 +910,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/9f/38/7d169a765993efde5095c70a668bf4f5831bb7ac099e932f2783e9b71abf/textual-7.5.0.tar.gz", hash = "sha256:c730cba1e3d704e8f1ca915b6a3af01451e3bca380114baacf6abf87e9dac8b6", size = 1592319, upload-time = "2026-01-30T13:46:39.881Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/9c/78/96ddb99933e11d91bc6e05edae23d2687e44213066bcbaca338898c73c47/textual-7.5.0-py3-none-any.whl", hash = "sha256:849dfee9d705eab3b2d07b33152b7bd74fb1f5056e002873cc448bce500c6374", size = 718164, upload-time = "2026-01-30T13:46:37.635Z" },
+]
+
+[[package]]
+name = "textual-image"
+version = "0.8.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pillow" },
+    { name = "rich" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1a/64/e5e49b639794f0ae426f6c19ca541af55b24a30e96df3b03e086688b8ec1/textual_image-0.8.5.tar.gz", hash = "sha256:43d4c0026a4f21fa255f41eac7b0fc1f7410a4c7bc9bf95b908bec901b0a8c3a", size = 109049, upload-time = "2025-12-26T18:38:08.709Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b0/0d/ca8367c100c09850379f83645abd60f47c051e6b1e7b64adb953bce96be9/textual_image-0.8.5-py3-none-any.whl", hash = "sha256:dffc85458ca8744bce3f17bddbf582b1e086eb52d111f1063753e8dd316fa45d", size = 109618, upload-time = "2025-12-26T18:38:07.11Z" },
 ]
 
 [[package]]

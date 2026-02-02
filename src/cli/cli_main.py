@@ -27,7 +27,9 @@ from ..db.writing import (db_build,
     which_path_to_images,
     image_write,
     new_dino,
-    ascii_dino_from_url
+    ascii_dino_from_url,
+    write_permission_check,
+    DBWriteError
     )
 
 from ..db.dino_classes import Dinosaur
@@ -56,14 +58,20 @@ def initialise():
         if os.path.exists(path_to_db):
             print("removing old Db")
             os.remove(path_to_db)
-        db_build(path_to_db, path_to_schema="src/db/schema.sql")
-        return
+        db_build(path_to_db, path_to_schema="src/assets/schema.sql")
+        
+        if write_permission_check(path_to_db):
+            return
+        else:
+            raise DBWriteError("Unable to write to this database on initialisation")
     else:
         p = "~/Dinodex/dinodex.db"
         path_to_db = os.path.expanduser(p)
-        db_build(path_to_db, path_to_schema="src/db/schema.sql")
-        return
-
+        db_build(path_to_db, path_to_schema="src/assets/schema.sql")
+        if write_permission_check(path_to_db):
+           return
+        else:
+            raise DBWriteError("Unable to write to this database on initialisation")
 
 @cli.async_command(name="collect", help="Collect a new Dinosaur!")
 async def collect(gui:Annotated[bool, typer.Option(help="Explore collection with a GUI")]= False):
@@ -91,10 +99,13 @@ async def collect(gui:Annotated[bool, typer.Option(help="Explore collection with
             img_path = which_path_to_images(dino_obj.imageURL)
             
             img_response = image_write(img_path, dino_obj.imageURL)
-            
-            new_dino(dino_obj, path_to_db, img_path, img_response)
+            if write_permission_check(path_to_db):
+                new_dino(dino_obj, path_to_db, img_path, img_response)
+            else:
                       
+                raise DBWriteError("Unable to log new dino")
             dino_ascii = ascii_dino_from_url(img_path=img_path, img_url=dino_obj.imageURL)
+            os.remove(img_path)
             gui_collect = Dinodex_Collect(dino_obj, dino_ascii)
             gui_collect.run()
             return dino_obj
@@ -133,20 +144,23 @@ async def collect(gui:Annotated[bool, typer.Option(help="Explore collection with
             print(dino_obj.name)
             print(dino_obj.description)
             
-            img_response = image_write(img_path, dino_obj.imageURL)
-            match img_response:
-                case 200:
-                    try:
-                        ascii_dino = ascii_magic.from_image(img_path)
-                    except UnidentifiedImageError:
-                        ascii_dino = ascii_magic.from_image("src/assets/missing_dino.png")
-                    with Live(console=console, refresh_per_second=0.5):
-                        console.print(ascii_dino.to_ascii(enhance_image=True))
-                case 404:
-                    print("We couldn't find a picture of this dino...")
-            
-            new_dino(dino_obj, path_to_db, img_path, img_response)
-                
+            with console.status("Photographing dino ..."):
+                img_response = image_write(img_path, dino_obj.imageURL)
+                match img_response:
+                    case 200:
+                        try:
+                            ascii_dino = ascii_magic.from_image(img_path)
+                        except UnidentifiedImageError:
+                            ascii_dino = ascii_magic.from_image("src/assets/missing_dino.png")
+                        with Live(console=console, refresh_per_second=0.5):
+                            console.print(ascii_dino.to_ascii(enhance_image=True))
+                    case 404:
+                        print("We couldn't find a picture of this dino...")
+            if write_permission_check(path_to_db):
+                new_dino(dino_obj, path_to_db, img_path, img_response)
+            else:
+                raise DBWriteError("Unable to log new dino")
+             
             return dino_obj
                 
         except httpx.ReadTimeout:
