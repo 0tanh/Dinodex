@@ -34,7 +34,7 @@ from ..db.writing import (db_build,
 
 from ..db.dino_classes import Dinosaur
 
-from ..assets.no_dino import NO_DINO
+from ..assets.no_dino import NO_DINO, NO_DINO_IMG_PATH
 
 load_dotenv()
 nest_asyncio.apply()
@@ -151,7 +151,7 @@ async def collect(gui:Annotated[bool, typer.Option(help="Explore collection with
                         try:
                             ascii_dino = ascii_magic.from_image(img_path)
                         except UnidentifiedImageError:
-                            ascii_dino = ascii_magic.from_image("src/assets/missing_dino.png")
+                            ascii_dino = ascii_magic.from_image(NO_DINO_IMG_PATH)
                         with Live(console=console, refresh_per_second=0.5):
                             console.print(ascii_dino.to_ascii(enhance_image=True))
                     case 404:
