@@ -1,3 +1,9 @@
+"""
+Writing to db functions. 
+
+
+"""
+
 import os
 import sqlite3
 

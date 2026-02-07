@@ -1,1 +1,0 @@
-INSERT into compile_test VALUES (1 , 'loves you', 'bettylovesyou.com')

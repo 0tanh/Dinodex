@@ -1,10 +1,13 @@
 import os
+import sqlite3
 import httpx
 from dotenv import load_dotenv
 import datetime
 import faker
 import typer
 import nest_asyncio
+from rich.prompt import Prompt
+from prompt_toolkit.shortcuts import radiolist_dialog 
 
 from PIL import UnidentifiedImageError
 
@@ -12,10 +15,10 @@ from typing import Annotated
 
 from async_typer import AsyncTyper
 
-from rich.progress import Progress, SpinnerColumn, TextColumn
+
 from rich.console import Console
 from rich.live import Live 
-from rich.spinner import Spinner
+
 
 import ascii_magic
 
@@ -170,24 +173,56 @@ async def collect(gui:Annotated[bool, typer.Option(help="Explore collection with
 
 @cli.command(name="config", help="Configure your Dino collection")
 def config():
+    
     ...
 
 @cli.command(name="gallery", help="All your dino pics!")
 def gallery():
+    
     ...
 
-@cli.command(name="mydino", help="View your dinos")
-def view():
-    ...
+@cli.command(name="mydino", help="mydino <3")
+def option_cli():
+    console = Console()
+    path_to_db = which_path_to_db()
+    with sqlite3.connect(path_to_db) as conn:
+        curr = conn.cursor()
+        curr.execute("SELECT name, species, description FROM mydinos")
+        r = curr.fetchall()
+        curr.close()
+    choices = [f for f in r[0]]
+    _values = enumerate([i for i in choices])
+    values = tuple(_values)
+    
+    style = {}
+    
+    result = radiolist_dialog(
+        title="Your Dinos!",
+        text="Which dino would you",
+        values=values,
+        style = style
+    ).run()
+    return result
+
+# def view():
+    
+    # option_cli()
+    # return which_dino    
+    # sel = Prompt.ask("Which Dino!", choices=choices, console=cons)
+        
+    
 
 @cli.command(name="dinofight!", help="Fight!")
 def dinofight():
+    
     ...
 
 @cli.command(name="export", help="Export your dinodex!")
 def exportDinodex():
+    
     ...
 
 @cli.command(name="import", help="Import a dinodex!")
 def importDinodex():
-    ...
+    
+    ... 
