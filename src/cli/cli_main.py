@@ -7,7 +7,10 @@ import faker
 import typer
 import nest_asyncio
 from rich.prompt import Prompt
-from prompt_toolkit.shortcuts import radiolist_dialog 
+from InquirerPy import inquirer
+from InquirerPy.base.control import Choice
+from InquirerPy.separator import Separator
+
 
 from PIL import UnidentifiedImageError
 
@@ -185,23 +188,16 @@ def gallery():
 def option_cli():
     console = Console()
     path_to_db = which_path_to_db()
+    print(path_to_db)
     with sqlite3.connect(path_to_db) as conn:
         curr = conn.cursor()
         curr.execute("SELECT name, species, description FROM mydinos")
         r = curr.fetchall()
         curr.close()
     choices = [f for f in r[0]]
-    _values = enumerate([i for i in choices])
-    values = tuple(_values)
+    values = [i for i in choices]
+    result = inquirer.rawlist(message="Your Dinos!",choices=values).execute()
     
-    style = {}
-    
-    result = radiolist_dialog(
-        title="Your Dinos!",
-        text="Which dino would you",
-        values=values,
-        style = style
-    ).run()
     return result
 
 # def view():

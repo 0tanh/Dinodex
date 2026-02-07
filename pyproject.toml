@@ -22,6 +22,8 @@ dependencies = [
     "httpcore==1.0.9",
     "httpx==0.28.1",
     "idna==3.11",
+    "inquirer>=3.4.1",
+    "inquirerpy>=0.3.4",
     "linkify-it-py==2.0.3",
     "markdown-it-py==4.0.0",
     "mdit-py-plugins==0.5.0",
