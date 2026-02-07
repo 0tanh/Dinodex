@@ -1,4 +1,6 @@
 import os
+import time
+import io
 import sqlite3
 import httpx
 from dotenv import load_dotenv
@@ -18,7 +20,6 @@ from typing import Annotated
 
 from async_typer import AsyncTyper
 
-
 from rich.console import Console
 from rich.live import Live 
 
@@ -35,6 +36,7 @@ from ..db.writing import (db_build,
     new_dino,
     ascii_dino_from_url,
     write_permission_check,
+    ascii_dino_from_db,
     DBWriteError
     )
 
@@ -181,24 +183,42 @@ def config():
 
 @cli.command(name="gallery", help="All your dino pics!")
 def gallery():
-    
+    console = Console()
+    path_to_db = which_path_to_db()
+    while True:
+        with sqlite3.connect(path_to_db) as conn:
+            curr = conn.cursor()
+            curr.execute("SELECT image, name FROM myDinos",)
+            r = curr.fetchall()
+            for dino in r:
+                ascii_dino = ascii_dino_from_db(dino[0])
+                name = dino[1]
+                console.print(ascii_dino.to_ascii(enhance_image=True))
+                print(name)
+                time.sleep(5)
+            curr.close()
     ...
 
 @cli.command(name="mydino", help="mydino <3")
 def option_cli():
     console = Console()
     path_to_db = which_path_to_db()
-    print(path_to_db)
-    with sqlite3.connect(path_to_db) as conn:
-        curr = conn.cursor()
-        curr.execute("SELECT name, species, description FROM mydinos")
-        r = curr.fetchall()
-        curr.close()
-    choices = [f for f in r[0]]
-    values = [i for i in choices]
-    result = inquirer.rawlist(message="Your Dinos!",choices=values).execute()
+    while True:
+        with sqlite3.connect(path_to_db) as conn:
+            curr = conn.cursor()
+            curr.execute("SELECT name, species, description FROM mydinos")
+            r = curr.fetchall()
+            choices = [f[0] for f in r]
+            which_dino = inquirer.select(message="Your Dinos!",choices=choices).execute()
+            print(which_dino)
+            curr.execute(f"SELECT image FROM myDinos WHERE name = '{which_dino}'",)
+            r = curr.fetchone()
+            ascii_dino = ascii_dino_from_db(r[0])
+            console.print(ascii_dino.to_ascii(enhance_image=True))
+            time.sleep(5)
+            curr.close()
     
-    return result
+    return which_dino
 
 # def view():
     
