@@ -1,7 +1,6 @@
 """
 Writing to db functions. 
 
-
 """
 import io
 import os
@@ -18,6 +17,9 @@ from src.assets.no_dino import NO_DINO, NO_DINO_ASCII, NO_DINO_IMG_PATH
 
 from .dino_classes import Dinosaur
 
+p = "~/Dinodex/dinodex.db"
+WORKING_DB = os.path.expanduser(p)
+PATH_TO_CONFIG = os.path.expanduser("~/Dinodex/config.json")
 
 class DBWriteError(Exception):
     def __init__(self, message):
@@ -78,6 +80,7 @@ def image_write(img_path: str, img_url: str) -> int:
 def which_path_to_db() -> str:
     """Where the database is!! should change in binary vs development"""
     load_dotenv()
+    config = load_config()
     path_env = os.getenv("PATH_TO_DB")
     if path_env:
         path_to_db = path_env
@@ -91,14 +94,17 @@ def which_path_to_db() -> str:
 def which_path_to_images(img_url: str) -> str:
     """Where Images are being written to! should be different for binary vs dev"""
     load_dotenv()
+    config = load_config()
     name = os.path.basename(img_url)
     path_env = os.getenv("PATH_TO_IMG")
     if path_env:
         path_to_img = f"{path_env}{name}"
         return path_to_img
     else:
+        
         p = "~/Dinodex/images/"
         path_to_img = f"{os.path.expanduser(p)}{name}"
+        
         return path_to_img
 
 
@@ -179,6 +185,11 @@ def new_dino(dino: Dinosaur, path_to_db, img_path, img_response):
 
 
 def remove_image(img_path) -> None:
+    """deletes an image
+
+    Args:
+        img_path (str): path to image to remove 
+    """
     os.remove(img_path)
 
 
@@ -215,11 +226,9 @@ def ascii_dino_from_db(blob):
     ascii_dino = ascii_magic.from_pillow_image(dino_pil)
     return ascii_dino
 
-p = "~/Dinodex/dinodex.db"
-WORKING_DB = os.path.expanduser(p)
-CONFIG_PATH = os.path.expanduser("~/Dinodex/config.json")
-
 class Config:
+    """Config object
+    """
     def __init__(self, data):
         self.name = data["name"]
         self.image_save = data["image_save"]
@@ -227,11 +236,16 @@ class Config:
         self.dinodex_path = data["dinodex_path"]
 
 def load_config()->Config:
-    with open(CONFIG_PATH, "r") as con:
+    """loads to current config
+
+    Returns:
+        Config: current config 
+    """
+    with open(PATH_TO_CONFIG, "r") as con:
         f = json.load(con)
     
     config = Config(f)
-    return Config
+    return config 
     
 
 if __name__ == "__main__":

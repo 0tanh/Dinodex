@@ -40,7 +40,7 @@ from ..db.writing import (db_build,
     write_permission_check,
     ascii_dino_from_db,
     WORKING_DB,
-    CONFIG_PATH,
+    PATH_TO_CONFIG,
     DBWriteError,
     load_config
     )
@@ -63,7 +63,7 @@ timeout = httpx.Timeout(30.0, connect=30.0)
 
 
 @cli.command(name="config", help="Configure your Dinodex")
-def config():
+def dino_config():
     name = inquirer.text(message="What's your name?", qmark="🦖").execute()
     
     choices = [
@@ -96,7 +96,7 @@ def config():
         "dinodex_path": WORKING_DB 
     }
     
-    with open(CONFIG_PATH, "w") as f:
+    with open(PATH_TO_CONFIG, "w") as f:
         json.dump(config, f)
         
 @cli.command(name="init", help="Start Your Dino Journey!")
@@ -104,8 +104,9 @@ def initialise():
     """Rebuilds Database from scratch and initialises your user"""
     
     load_dotenv()
-    #TODO customise location of db_path
-    #TODO ask user for their name
+    dino_config()
+    
+    config = load_config()
     
     path_to_db = os.getenv("PATH_TO_DB")
     if path_to_db:
@@ -120,8 +121,7 @@ def initialise():
         else:
             raise DBWriteError("Unable to write to this database on initialisation")
     else:
-        p = f"~/Dinodex/dinodex.db"
-        path_to_db = os.path.expanduser(p)
+        path_to_db = f"{config.dinodex_path}/Dinodex/dinodex.db"
         db_build(path_to_db, path_to_schema="src/assets/schema.sql")
         if write_permission_check(path_to_db):
            return
