@@ -1,0 +1,5 @@
+graft src
+recursive-include assets
+include src/assets/*.png
+include src/assets/*.sql
+include src/assets/*.json

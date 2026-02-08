@@ -252,7 +252,7 @@ def print_no_dino():
     # dino_obj = NO_DINO
     # img_path = which_path_to_images(dino_obj.imageURL, config)
     # ascii_dino = ascii_dino_from_url(img_path=img_path, img_url=dino_obj.imageURL)
-    console.print(NO_DINO_ASCII)
+    console.print(NO_DINO_ASCII.to_ascii())
 
 if __name__ == "__main__":
     path_to_db = "../dinodex.db"
