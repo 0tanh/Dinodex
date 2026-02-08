@@ -1,1 +1,6 @@
-{"image_save": false, "name": "Betty", "images_path": "", "dinodex_path": "/Users/bettypotgieter/Dinodex/dinodex.db"}
+{
+    "name": "Not Betty",
+    "dinodex_path": "/Users/bettypotgieter/Dinodex/dinodex.db",
+    "image_save": false,
+    "images_path": ""
+}

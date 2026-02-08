@@ -5,6 +5,14 @@ import json
 from InquirerPy import inquirer
 from InquirerPy.validator import PathValidator
 from InquirerPy.base.control import Choice
+from dotenv import load_dotenv
+
+load_dotenv()
+
+path_env = os.getenv("PATH_TO_CONFIG")
+
+if path_env:
+    PATH_TO_CONFIG = path_env
 
 PATH_TO_CONFIG = os.path.expanduser("~/Dinodex/config.json")
 
@@ -32,6 +40,7 @@ def load_config()->Config:
     Returns:
         Config: current config 
     """
+    
     with open(PATH_TO_CONFIG, "r") as con:
         f = json.load(con)
     
@@ -53,15 +62,17 @@ def dinodex_path_config(config:Config|None=None)->str:
             message="Please select a directory")
     ).execute()
     
-    full_dino_path = f"{os.path.expanduser(dinodex_path)}/dinodex.db"
+    dino_path = f"{os.path.expanduser(dinodex_path)}"
     
-    if not os.path.exists(full_dino_path):
-        os.mkdir(full_dino_path)
+    if not os.path.exists(dino_path):
+        os.mkdir(dino_path)
     if config:
         old_db_path = config.dinodex_path
         if old_db_path != dinodex_path:
             shutil.move(src=old_db_path, dst=dinodex_path)
-        
+    
+    full_dino_path = f"{dino_path}/dinodex.db"
+    
     return full_dino_path
 
 def images_path_config(config:Config|None=None)-> tuple:
@@ -99,7 +110,7 @@ def images_path_config(config:Config|None=None)-> tuple:
 def config_write(path_to_config:str, config_data:dict)->None:
     """Write to a config"""
     with open(path_to_config, "w") as f:
-        json.dump(config_data, f)
+        json.dump(config_data, f, indent=4)
 
 def all_config(path_to_config):
     """flow to write full config"""
@@ -114,15 +125,15 @@ def all_config(path_to_config):
         "images_path": f"{images_path}",
         }
     
-    oldcheck = os.path.exists(path_to_config)
-    if oldcheck:
-        config = load_config()
-        old_db_path = config.dinodex_path
-        if old_db_path != dinodex_path:
-            shutil.move(src=old_db_path, dst=dinodex_path)
+    # oldcheck = os.path.exists(path_to_config)
+    # if oldcheck:
+    #     config = load_config()
+    #     old_db_path = config.dinodex_path
+    #     if old_db_path != dinodex_path:
+    #         shutil.move(src=old_db_path, dst=dinodex_path)
         
-        old_images_path = config.images_path
-        if old_images_path != images_path:
-            shutil.move(src=old_images_path, dst=images_path)
+    #     old_images_path = config.images_path
+    #     if old_images_path != images_path or os.path.exists(images_path):
+    #         shutil.move(src=old_images_path, dst=images_path)
     
     config_write(path_to_config, config_data)

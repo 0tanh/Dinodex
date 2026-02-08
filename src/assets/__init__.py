@@ -1,0 +1,1 @@
+"""assets that are mostly immutable"""

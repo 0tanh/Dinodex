@@ -2,7 +2,6 @@
 Writing to db functions. 
 
 """
-import configparser
 import io
 import os
 import sqlite3
@@ -14,7 +13,12 @@ from dotenv import load_dotenv
 from PIL import UnidentifiedImageError
 from PIL import Image
 
-from src.assets.no_dino import NO_DINO, NO_DINO_ASCII, NO_DINO_IMG_PATH
+from rich.console import Console
+
+from src.assets.no_dino import (
+    NO_DINO_ASCII, 
+    NO_DINO_IMG_PATH, 
+    NO_DINO)
 
 from ..config.config import (
     Config,
@@ -242,7 +246,15 @@ def ascii_dino_from_db(blob):
     dino_pil = Image.open(workable)
     ascii_dino = ascii_magic.from_pillow_image(dino_pil)
     return ascii_dino
-    
+
+def print_no_dino():
+    """prints when no dino is available"""
+    config = load_config()
+    console = Console()
+    dino_obj = NO_DINO
+    img_path = which_path_to_images(dino_obj.imageURL, config)
+    ascii_dino = ascii_dino_from_url(img_path=img_path, img_url=dino_obj.imageURL)
+    console.print(ascii_dino.to_ascii(enhance_image=True))
 
 if __name__ == "__main__":
     path_to_db = "../dinodex.db"

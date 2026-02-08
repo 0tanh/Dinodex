@@ -10,11 +10,15 @@ import datetime
 import faker
 import typer
 import nest_asyncio
-from rich.prompt import Prompt
+
+from rich.errors import MarkupError
+from rich.panel import Panel
+from rich.console import Console
+from rich.live import Live 
+
 from InquirerPy import inquirer
 from InquirerPy.validator import PathValidator
 from InquirerPy.base.control import Choice
-from InquirerPy.separator import Separator
 
 from PIL import UnidentifiedImageError
 
@@ -22,21 +26,18 @@ from typing import Annotated
 
 from async_typer import AsyncTyper
 
-from rich.console import Console
-from rich.live import Live 
-
 import ascii_magic
 
 from src.gui.gui_collect import Dinodex_Collect
 
 from ..config.config import (
+    PATH_TO_CONFIG,
+    config_to_dict,
     name_config,
     images_path_config,
     dinodex_path_config,
     config_write,
     load_config,
-    Config,
-    PATH_TO_CONFIG,
     all_config
 )
 
@@ -50,13 +51,15 @@ from ..db.writing import (db_build,
     ascii_dino_from_url,
     write_permission_check,
     ascii_dino_from_db,
-    WORKING_DB,
-    DBWriteError,
+    print_no_dino,
+    DBWriteError
     )
 
 from ..db.dino_classes import Dinosaur
 
-from ..assets.no_dino import NO_DINO, NO_DINO_IMG_PATH
+from ..assets.no_dino import (
+    # NO_DINO, 
+    NO_DINO_IMG_PATH)
 
 STYLE = {}
 KEYBINDINGS = {}
@@ -76,13 +79,13 @@ def initialise():
     """Rebuilds Database from scratch and initialises your user"""
     
     load_dotenv()
-    dino_config()
+    path_to_config = which_path_to_config()
+    all_config(path_to_config)
     
     config = load_config()
     #TODO readd the b here to fix
-    path_to_db = os.getenv("PATH_TO_D") 
+    path_to_db = which_path_to_db(config)
     if path_to_db:
-        print("Test Env..")
         if os.path.exists(path_to_db):
             print("removing old Db")
             os.remove(path_to_db)
@@ -95,10 +98,10 @@ def initialise():
     else:
         path_to_db = f"{config.dinodex_path}"
         db_build(path_to_db, path_to_schema="src/assets/schema.sql")
-        if write_permission_check(path_to_db):
-           return
-        else:
+        if not write_permission_check(path_to_db):
             raise DBWriteError("Unable to write to this database on initialisation")
+    
+    print(f"Welcome to the dinodex {config.name}! Run dinodex collect to start collecting dinos")
 
 @cli.async_command(name="collect", help="Collect a new Dinosaur!")
 async def collect(gui:Annotated[bool, typer.Option(help="Explore collection with a GUI")]= False):
@@ -140,12 +143,12 @@ async def collect(gui:Annotated[bool, typer.Option(help="Explore collection with
         
         except httpx.ReadTimeout:
             print("Search unsuccessful...")
-            dino_obj = NO_DINO
-            img_path = which_path_to_images(dino_obj.imageURL, config)
-            dino_ascii = ascii_dino_from_url(img_path=img_path, img_url=dino_obj.imageURL)
-            gui_collect = Dinodex_Collect(dino_obj, dino_ascii)
+            # dino_obj = NO_DINO
+            # img_path = which_path_to_images(dino_obj.imageURL, config)
+            # dino_ascii = ascii_dino_from_url(img_path=img_path, img_url=dino_obj.imageURL)
+            # gui_collect = Dinodex_Collect(dino_obj, dino_ascii)
             
-            gui_collect.run()
+            # gui_collect.run()
     else:
         try:
             async with httpx.AsyncClient() as client:
@@ -180,8 +183,19 @@ async def collect(gui:Annotated[bool, typer.Option(help="Explore collection with
                             ascii_dino = ascii_magic.from_image(img_path)
                         except UnidentifiedImageError:
                             ascii_dino = ascii_magic.from_image(NO_DINO_IMG_PATH)
-                        with Live(console=console, refresh_per_second=0.5):
-                            console.print(ascii_dino.to_ascii(enhance_image=True))
+                        try:
+                            
+                            with Live(Panel(""),console=console, refresh_per_second=0.5) as live:
+                                str = ascii_dino.to_ascii(enhance_image=True)
+                                dino_str = ""
+                                for c in str:
+                                    dino_str += c
+                                    live.update(Panel(dino_str, title=dino_obj.name))
+                        except MarkupError:
+                            print("There was an error making this dino ascii!")
+                            print_no_dino()
+                            new_dino(dino_obj, path_to_db, NO_DINO_IMG_PATH, img_response, config)
+                            return
                     case 404:
                         print("We couldn't find a picture of this dino...")
             if write_permission_check(path_to_db):
@@ -193,7 +207,8 @@ async def collect(gui:Annotated[bool, typer.Option(help="Explore collection with
                 
         except httpx.ReadTimeout:
             print("Search unsuccessful...")
-            return NO_DINO
+            print_no_dino()
+            # return NO_DINO
 
 
 @cli.command(name="gallery", help="All your dino pics!")
@@ -201,28 +216,33 @@ def gallery():
     console = Console()
     config = load_config()
     path_to_db = which_path_to_db(config)
-    while True:
-        with sqlite3.connect(path_to_db) as conn:
-            curr = conn.cursor()
-            curr.execute("SELECT image, name FROM myDinos",)
-            r = curr.fetchall()
-            if len(r) == 0:
-                print("You have no photographed dinos!")
-                break
-            for dino in r:
-                ascii_dino = ascii_dino_from_db(dino[0])
-                name = dino[1]
-                console.print(ascii_dino.to_ascii(enhance_image=True))
-                print(name)
-                time.sleep(5)
-            curr.close()
+    with sqlite3.connect(path_to_db) as conn:
+        curr = conn.cursor()
+        curr.execute("SELECT image, name FROM myDinos",)
+        r = curr.fetchall()
+        curr.close()
+    
+    if len(r) == 0:
+        print("You have no photographed dinos!")
+        print_no_dino()
+        return
+    i = 0    
+    while i < 2 * len(r):
+        for dino in r:
+            ascii_dino = ascii_dino_from_db(dino[0])
+            name = dino[1]
+            console.print(ascii_dino.to_ascii(enhance_image=True))
+            print(name)
+            time.sleep(5)
+            i += 1
 
-@cli.command(name="mydinos", help="mydinos <3")
+@cli.command(name="mydinos", help="Look through your dinos!")
 def my_dino_cli():
     console = Console()
     config = load_config()
     path_to_db = which_path_to_db(config)
     while True:
+        print(f"{config.name}'s dinodex")
         with sqlite3.connect(path_to_db) as conn:
             curr = conn.cursor()
             curr.execute("SELECT name, species, description FROM mydinos")
@@ -230,35 +250,89 @@ def my_dino_cli():
             choices = [f[0] for f in r]
             if len(choices) == 0:
                 print("You have caught no dinos!")
+                print_no_dino()
                 return
+            
+            choices.append("Quit")
+            
             which_dino = inquirer.select(qmark="🦖",amark= "🦕",message="Your Dinos!",choices=choices).execute()
             print(which_dino)
-            curr.execute(f"SELECT image FROM myDinos WHERE name = '{which_dino}'",)
-            r = curr.fetchone()
-            ascii_dino = ascii_dino_from_db(r[0])
-            console.print(ascii_dino.to_ascii(enhance_image=True))
-            time.sleep(5)
-            curr.close()
-    
+            if which_dino == "Quit":
+                curr.close()
+                return
+            else:
+                curr.execute(f"SELECT image FROM myDinos WHERE name = '{which_dino}'",)
+                r = curr.fetchone()
+                ascii_dino = ascii_dino_from_db(r[0])
+                console.print(ascii_dino.to_ascii(enhance_image=True))
+                time.sleep(5)
+                curr.close()
+        
 
-@cli.command(name="dinofight!", help="Fight!")
+@cli.command(name="dinofight! #TODO", help="Fight!")
 def dinofight():
-    
+    print("TODO")
     ...
+
+@cli.command(name="sanity", 
+    help="Sanity check info about the current config",
+    hidden=True)
+def sanity():
+    print("Config is currently arranged as such:")
+    
+    print(f"path to config is {PATH_TO_CONFIG}")
+    config = load_config()
+    
+    config_dict = config_to_dict(config)
+    
+    for k, v in config_dict.items():
+        print(k, v)
+    
 
 @cli.command(name="config", help="Configure your Dinodex")
 def dino_config():
-    old_db_path = ""
-    old_images_path = ""
     path_to_config = which_path_to_config()
     if os.path.exists(path_to_config):
         print("Reconfiguring...")
         config = load_config()
-        old_db_path = config.dinodex_path
-        old_images_path = config.images_path
+        choices = [
+            Choice(name="All", value=0),
+            Choice(name="Username", value=1),
+            Choice(name="Dinodex path", value=2),
+            Choice(name="Images", value=3),
+            Choice(name="Exit", value=-1)
+        ]
         
+        to_config = inquirer.select(qmark="🦖",
+            amark= "🦕",
+            message="Select what you would like to configure",
+            choices=choices).execute()
+        match to_config:
+            case -1:
+                print("Configuration unchanged")
+                return
+            case 0:
+                all_config(path_to_config)
+                return
+            case 1:
+                name = name_config()
+                config.name = name
+                data = config_to_dict(config)
+                config_write(path_to_config, data)
+                
+            case 2:
+                dinodex_path = dinodex_path_config(config)
+                config.dinodex_path = dinodex_path
+                data = config_to_dict(config)
+                config_write(path_to_config, data)
+                
+            case 3:
+                image_save, images_path=images_path_config(config)
+                config.image_save, config.images_path = image_save, images_path
+                data = config_to_dict(config)
+                config_write(path_to_config, data)
     else:
-        all_config(path_to_config)
+       all_config(path_to_config) 
         
 
 
@@ -295,9 +369,14 @@ def importDinodex():
         validate=PathValidator(is_file=True, 
             message="Please select a file")
     ).execute()
-    full_path = os.path.expanduser(where_from)
-    p = config.dinodex_path
-    shutil.copy2(full_path, p)
-    print("You have imported a new dinodex!")
     
+    full_path = os.path.expanduser(where_from)
+    p = Path(config.dinodex_path).with_suffix(".db")
+    
+    shutil.copy2(full_path, config.dinodex_path)
+    print("You have imported a new dinodex!")
+
+@cli.command(name="unint", help="uninstalls the dinodex", hidden=True)
+def uninstall():
+    ...    
     

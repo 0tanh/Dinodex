@@ -1,0 +1,4 @@
+PATH_TO_DB="src/dinodex.db"
+PATH_TO_IMG="src/images/"
+PATH_TO_MISSING_DINO="src/assets/missing_dino.png"
+PATH_TO_CONFIG="src/assets/config.json"
