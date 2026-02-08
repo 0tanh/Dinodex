@@ -1,0 +1,1 @@
+"""storing functions to extend configuration of dinodex"""

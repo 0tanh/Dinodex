@@ -29,6 +29,17 @@ import ascii_magic
 
 from src.gui.gui_collect import Dinodex_Collect
 
+from ..config.config import (
+    name_config,
+    images_path_config,
+    dinodex_path_config,
+    config_write,
+    load_config,
+    Config,
+    PATH_TO_CONFIG,
+    all_config
+)
+
 from ..db.writing import (db_build, 
     log_req, 
     which_path_to_db, 
@@ -40,9 +51,7 @@ from ..db.writing import (db_build,
     write_permission_check,
     ascii_dino_from_db,
     WORKING_DB,
-    PATH_TO_CONFIG,
     DBWriteError,
-    load_config,
     )
 
 from ..db.dino_classes import Dinosaur
@@ -61,67 +70,6 @@ fake = faker.Faker()
 
 timeout = httpx.Timeout(30.0, connect=30.0)
 
-
-@cli.command(name="config", help="Configure your Dinodex")
-def dino_config():
-    old_db_path = ""
-    old_images_path = ""
-    path_to_config = which_path_to_config()
-    if os.path.exists(path_to_config):
-        print("Reconfiguring...")
-        config = load_config()
-        old_db_path = config.dinodex_path
-        old_images_path = config.images_path
-    
-    
-    name = inquirer.text(message="What's your name?", qmark="🦖", amark="🦕").execute()
-    
-    choices = [
-        Choice(name="Yes",value =True),
-        Choice(name="No",value =False)
-    ]
-    
-    dinodex_path= inquirer.filepath(
-        qmark="🦖",
-        amark="🦕",
-        message="Where would you like your dinodex?",
-        validate=PathValidator(is_dir=True, 
-            message="Please select a directory")
-    ).execute()
-    
-    full_dino_path = os.path.expanduser(dinodex_path)
-    
-    if not os.path.exists(full_dino_path):
-        os.mkdir(full_dino_path)
-    
-    image_save = inquirer.select(qmark="🦖", amark="🦕",message="Would you like to save your dino photos seperately?", 
-        choices = choices).execute()
-    
-    if image_save:
-        images_path = inquirer.filepath(
-            qmark="🦖",
-            amark="🦕",
-            message="Where would you like to save your images?",
-            validate=PathValidator(is_dir=True, 
-                message="Please select a directory")
-        ).execute()
-    else:
-        images_path = ""
-    config = {
-        "image_save":image_save,
-        "name":name,
-        "images_path":os.path.expanduser(images_path),
-        "dinodex_path": f"{full_dino_path}/dinodex.db" 
-    }
-    
-    if os.path.exists(path_to_config):
-        shutil.move(old_db_path, full_dino_path)
-        if images_path:
-            shutil.move(old_images_path, images_path)
-    
-    with open(path_to_config, "w") as f:
-        json.dump(config, f)
-    
         
 @cli.command(name="init", help="Start Your Dino Journey!")
 def initialise():
@@ -298,6 +246,22 @@ def dinofight():
     
     ...
 
+@cli.command(name="config", help="Configure your Dinodex")
+def dino_config():
+    old_db_path = ""
+    old_images_path = ""
+    path_to_config = which_path_to_config()
+    if os.path.exists(path_to_config):
+        print("Reconfiguring...")
+        config = load_config()
+        old_db_path = config.dinodex_path
+        old_images_path = config.images_path
+        
+    else:
+        all_config(path_to_config)
+        
+
+
 @cli.command(name="export", help="Export your dinodex!")
 def exportDinodex():
     """Export your dino dex collection"""
@@ -318,6 +282,7 @@ def exportDinodex():
     db_change = os.path.expanduser(f"{where_to}/{user_name}_dex{dinodex_suff}")
     my_baselocation.touch()
     shutil.copy2(my_baselocation, db_change)
+    print("You have exported a [green]dinodex[/green]!")
 
 @cli.command(name="import", help="Import a dinodex!")
 def importDinodex():
@@ -334,3 +299,5 @@ def importDinodex():
     p = config.dinodex_path
     shutil.copy2(full_path, p)
     print("You have imported a new dinodex!")
+    
+    

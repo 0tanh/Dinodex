@@ -16,42 +16,26 @@ from PIL import Image
 
 from src.assets.no_dino import NO_DINO, NO_DINO_ASCII, NO_DINO_IMG_PATH
 
-from .dino_classes import Dinosaur
-full_path = os.path.expanduser("~/Dinodex")
+from ..config.config import (
+    Config,
+    PATH_TO_CONFIG,
+    load_config
+)
 
+from .dino_classes import Dinosaur
+
+full_path = os.path.expanduser("~/Dinodex")
 if not os.path.exists(full_path):
     os.mkdir(full_path)
 
 p = "~/Dinodex/dinodex.db"
 WORKING_DB = os.path.expanduser(p)
-PATH_TO_CONFIG = os.path.expanduser("~/Dinodex/config.json")
 
 class DBWriteError(Exception):
     """Custom exception for failing to write a database"""
     def __init__(self, message):
         self.message = message
         super().__init__(self.message)
-
-class Config:
-    """Config object
-    """
-    def __init__(self, data):
-        self.name = data["name"]
-        self.image_save = data["image_save"]
-        self.images_path = data["images_path"]
-        self.dinodex_path = data["dinodex_path"]
-
-def load_config()->Config:
-    """loads to current config
-
-    Returns:
-        Config: current config 
-    """
-    with open(PATH_TO_CONFIG, "r") as con:
-        f = json.load(con)
-    
-    config = Config(f)
-    return config 
 
 def write_permission_check(path_to_db):
     """Diagnostic test to check if this place has write permissions
@@ -108,6 +92,7 @@ def which_path_to_db(config:Config) -> str:
     load_dotenv()
     path_env = os.getenv("PATH_TO_DB")
     if path_env:
+        print("Testing environment database")
         path_to_db = path_env
     else:
         path_to_db = config.dinodex_path
@@ -117,6 +102,7 @@ def which_path_to_config()->str:
     load_dotenv()
     path_env = os.getenv("PATH_TO_CONFIG")
     if path_env:
+        print("Testing environment config")
         path_to_config = path_env
     else:
         path_to_config = PATH_TO_CONFIG
@@ -129,7 +115,7 @@ def which_path_to_images(img_url: str, config: Config) -> str:
     name = os.path.basename(img_url)
     path_env = os.getenv("PATH_TO_IMG")
     if path_env:
-        print("Testing environment")
+        print("Testing environment images")
         path_to_img = f"{path_env}{name}"
         return path_to_img
     else:
