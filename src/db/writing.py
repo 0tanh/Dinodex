@@ -120,10 +120,10 @@ def which_path_to_images(img_url: str, config: Config) -> str:
     path_env = os.getenv("PATH_TO_IMG")
     if path_env:
         print("Testing environment images")
-        path_to_img = f"{path_env}{name}"
+        path_to_img = f"{path_env}/{name}"
         return path_to_img
     else:
-        path_to_img = f"{config.images_path}{name}"
+        path_to_img = f"{config.images_path}/{name}"
         
     return path_to_img
 
@@ -143,17 +143,17 @@ def db_build(path_to_db: str, path_to_schema: str):
         curr.execute(
             "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='table' AND name='requests')"
         )
-        requests_check = curr.fetchall()
+        # requests_check = curr.fetchall()
 
-        curr.execute(
-            "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='table' AND name='myDinos')"
-        )
-        myDinos_check = curr.fetchall()
+        #curr.execute(
+        #     "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='table' AND name='myDinos')"
+        # )
+        #myDinos_check = curr.fetchall()
 
-        if myDinos_check[0][0] == 1:
-            print("My Dinos table made successfully")
-        if requests_check[0][0] == 1:
-            print("requests table made successfully")
+        # if myDinos_check[0][0] == 1:
+        #     print("My Dinos table made successfully")
+        # if requests_check[0][0] == 1:
+        #     print("requests table made successfully")
 
         curr.close()
 
@@ -249,12 +249,12 @@ def ascii_dino_from_db(blob):
 
 def print_no_dino():
     """prints when no dino is available"""
-    config = load_config()
+    # config = load_config()
     console = Console()
-    dino_obj = NO_DINO
-    img_path = which_path_to_images(dino_obj.imageURL, config)
-    ascii_dino = ascii_dino_from_url(img_path=img_path, img_url=dino_obj.imageURL)
-    console.print(ascii_dino.to_ascii(enhance_image=True))
+    # dino_obj = NO_DINO
+    # img_path = which_path_to_images(dino_obj.imageURL, config)
+    # ascii_dino = ascii_dino_from_url(img_path=img_path, img_url=dino_obj.imageURL)
+    console.print(NO_DINO_ASCII)
 
 if __name__ == "__main__":
     path_to_db = "../dinodex.db"

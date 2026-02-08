@@ -92,7 +92,7 @@ def initialise():
         db_build(path_to_db, path_to_schema="src/assets/schema.sql")
         
         if write_permission_check(path_to_db):
-            return
+            pass
         else:
             raise DBWriteError("Unable to write to this database on initialisation")
     else:
@@ -101,7 +101,9 @@ def initialise():
         if not write_permission_check(path_to_db):
             raise DBWriteError("Unable to write to this database on initialisation")
     
-    print(f"Welcome to the dinodex {config.name}! Run dinodex collect to start collecting dinos")
+    console.print(f"Welcome to the dinodex [bold]{config.name}[/bold]! \n")
+    console.print("Run [italics] ]dinodex collect [/italics] to start collecting dinos\n")
+    console.print("Dinos can be very shy, so sometimes you have to look around for a bit before you see a dino...")
 
 @cli.async_command(name="collect", help="Collect a new Dinosaur!")
 async def collect(gui:Annotated[bool, typer.Option(help="Explore collection with a GUI")]= False):
@@ -172,8 +174,37 @@ async def collect(gui:Annotated[bool, typer.Option(help="Explore collection with
                     dino_obj = Dinosaur(dino_son, name, collected_date)
             img_path = which_path_to_images(dino_obj.imageURL, config)
             
-            print(dino_obj.name)
-            print(dino_obj.description)
+            print("You have met...", end="")
+            
+            # time.sleep(3)
+            # print(".",end="")
+            # time.sleep(3)
+            # print(".",end="")
+            # time.sleep(3)
+            # print(".",end="")
+            time.sleep(3)
+            
+            name = f"[bold green]{dino_obj.name}[/bold green]"
+            
+            console.print(f"{name}\n")
+            
+            console.print(f"{name} is a {dino_obj.species} from the {dino_obj.period} \n")
+            
+            desc_copy = f"[italics]{dino_obj.description}[/italics]"
+            
+            # print(name_copy)
+            with Live(Panel(""),console=console, refresh_per_second=0.05) as live:
+                dino_str = ""
+                for c in desc_copy:
+                    dino_str += c
+                    live.update(Panel(dino_str, 
+                        # title=dino_obj.name, 
+                        subtitle=dino_obj.species,
+                        padding=(1,1),
+                        safe_box=True),refresh=True)
+                    time.sleep(0.00001)
+                    
+            # print(dino_obj.description)
             
             with console.status("Photographing dino ..."):
                 img_response = image_write(img_path, dino_obj.imageURL)
@@ -185,12 +216,18 @@ async def collect(gui:Annotated[bool, typer.Option(help="Explore collection with
                             ascii_dino = ascii_magic.from_image(NO_DINO_IMG_PATH)
                         try:
                             
-                            with Live(Panel(""),console=console, refresh_per_second=0.5) as live:
-                                str = ascii_dino.to_ascii(enhance_image=True)
+                            with Live(Panel(""),console=console, refresh_per_second=0.05) as live:
+                                stringy_dino = ascii_dino.to_ascii(enhance_image=True)
                                 dino_str = ""
-                                for c in str:
+                                for c in stringy_dino:
                                     dino_str += c
-                                    live.update(Panel(dino_str, title=dino_obj.name))
+                                    live.update(Panel(dino_str, 
+                                        title=dino_obj.name, 
+                                        subtitle=dino_obj.species,
+                                        padding=(1,1),
+                                        safe_box=True),refresh=True)
+                                    time.sleep(0.00001)
+                            console.print(f"[bold blue][link={dino_obj.imageURL}]View here[/link][/bold blue]")
                         except MarkupError:
                             print("There was an error making this dino ascii!")
                             print_no_dino()
@@ -218,7 +255,7 @@ def gallery():
     path_to_db = which_path_to_db(config)
     with sqlite3.connect(path_to_db) as conn:
         curr = conn.cursor()
-        curr.execute("SELECT image, name FROM myDinos",)
+        curr.execute("SELECT image, name, imageURL, collected_date FROM myDinos",)
         r = curr.fetchall()
         curr.close()
     
@@ -233,6 +270,7 @@ def gallery():
             name = dino[1]
             console.print(ascii_dino.to_ascii(enhance_image=True))
             print(name)
+            console.print(f"[bold blue][link={dino[2]}]View here[/link][/bold blue]")
             time.sleep(5)
             i += 1
 
@@ -261,10 +299,11 @@ def my_dino_cli():
                 curr.close()
                 return
             else:
-                curr.execute(f"SELECT image FROM myDinos WHERE name = '{which_dino}'",)
+                curr.execute(f"SELECT image, imageURL FROM myDinos WHERE name = '{which_dino}'",)
                 r = curr.fetchone()
                 ascii_dino = ascii_dino_from_db(r[0])
                 console.print(ascii_dino.to_ascii(enhance_image=True))
+                console.print(f"[bold blue][link={r[1]}]View here[/link][/bold blue]")
                 time.sleep(5)
                 curr.close()
         
@@ -356,7 +395,7 @@ def exportDinodex():
     db_change = os.path.expanduser(f"{where_to}/{user_name}_dex{dinodex_suff}")
     my_baselocation.touch()
     shutil.copy2(my_baselocation, db_change)
-    print("You have exported a [green]dinodex[/green]!")
+    console.print("You have exported a [green]dinodex[/green]!")
 
 @cli.command(name="import", help="Import a dinodex!")
 def importDinodex():

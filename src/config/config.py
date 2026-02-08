@@ -1,7 +1,7 @@
 import shutil
 import os
 import json
-
+from pathlib import Path
 from InquirerPy import inquirer
 from InquirerPy.validator import PathValidator
 from InquirerPy.base.control import Choice
@@ -103,7 +103,10 @@ def images_path_config(config:Config|None=None)-> tuple:
             if old_images_path != images_path:
                 shutil.move(src=old_images_path, dst=images_path)
     else:
-        images_path = ""
+        full = os.path.expanduser("~/Dinodex/dino_pics")
+        p = Path(full)
+        p.touch()
+        images_path = full
     
     return (image_save, images_path)
 
