@@ -1,3 +1,4 @@
+"""All cli logic lives here"""
 import os
 import shutil
 from pathlib import Path
@@ -27,9 +28,9 @@ from async_typer import AsyncTyper
 
 import ascii_magic
 
-from src.gui.gui_collect import Dinodex_Collect
+from gui.gui_collect import Dinodex_Collect
 
-from ..config.config import (
+from config.config import (
     PATH_TO_CONFIG,
     config_to_dict,
     name_config,
@@ -40,7 +41,7 @@ from ..config.config import (
     all_config
 )
 
-from ..db.writing import (db_build, 
+from db.writing import (db_build, 
     log_req, 
     which_path_to_db, 
     which_path_to_images,
@@ -54,9 +55,9 @@ from ..db.writing import (db_build,
     DBWriteError
     )
 
-from ..db.dino_classes import Dinosaur
+from db.dino_classes import Dinosaur
 
-from ..assets.no_dino import (
+from assets.no_dino import (
     # NO_DINO, 
     NO_DINO_IMG_PATH)
 

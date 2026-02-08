@@ -4,9 +4,9 @@ from textual.app import App
 from textual.widgets import Footer 
 from textual.containers import Grid
 
-from src.assets.no_dino import NO_DINO_ASCII
-from src.db.dino_classes import Dinosaur
-from src.widget.Dino_Widgets import (Dino_Ascii, Dino_Info)
+from assets.no_dino import NO_DINO_ASCII
+from db.dino_classes import Dinosaur
+from widget.Dino_Widgets import (Dino_Ascii, Dino_Info)
 
 NO_DINO_ASCII
 

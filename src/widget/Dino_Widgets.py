@@ -6,9 +6,9 @@ from textual.reactive import  reactive
 from textual.containers import  Container
 from textual.screen import Screen
 
-from src.assets.no_dino import NO_DINO
+from assets.no_dino import NO_DINO
 
-from ..db.dino_classes import Dinosaur
+from db.dino_classes import Dinosaur
 
 NO_DINO
 
@@ -75,7 +75,7 @@ class Dino_Pic(Screen):
     
     def __init__(self):
             super().__init__()
-            # self.id = id
+            self.id = id
             # self.dino = dino
 
     def compose(self):

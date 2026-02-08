@@ -14,17 +14,17 @@ from PIL import Image
 
 from rich.console import Console
 
-from src.assets.no_dino import (
+from assets.no_dino import (
     NO_DINO_ASCII, 
     NO_DINO_IMG_PATH)
 
-from ..config.config import (
+from config.config import (
     Config,
     PATH_TO_CONFIG,
     load_config
 )
 
-from .dino_classes import Dinosaur
+from db.dino_classes import Dinosaur
 
 full_path = os.path.expanduser("~/Dinodex")
 if not os.path.exists(full_path):

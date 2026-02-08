@@ -1,5 +1,5 @@
 [project]
-name = "compiling-python-to-c"
+name = "dinodex"
 version = "0.1.0"
 description = "Dinodex! An interactive terminal based dinosaur pokedex"
 readme = "README.md"
@@ -12,6 +12,7 @@ dependencies = [
     "ascii-magic==2.7.4",
     "async-typer==0.1.10",
     "attrs==25.4.0",
+    "build>=1.4.0",
     "certifi==2026.1.4",
     "charset-normalizer==3.4.4",
     "click==8.3.1",
@@ -54,3 +55,16 @@ dependencies = [
     "zstandard==0.25.0",
 ]
 
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project.scripts]
+dinodex = "dinodex:main"
+
+[tools.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
