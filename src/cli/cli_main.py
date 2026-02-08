@@ -1,4 +1,7 @@
 import os
+import json
+import shutil
+from pathlib import Path
 import time
 import io
 import sqlite3
@@ -10,6 +13,7 @@ import typer
 import nest_asyncio
 from rich.prompt import Prompt
 from InquirerPy import inquirer
+from InquirerPy.validator import PathValidator
 from InquirerPy.base.control import Choice
 from InquirerPy.separator import Separator
 
@@ -44,6 +48,9 @@ from ..db.dino_classes import Dinosaur
 
 from ..assets.no_dino import NO_DINO, NO_DINO_IMG_PATH
 
+p = f"~/Dinodex/dinodex.db"
+WORKING_DB = os.path.expanduser(p)
+
 load_dotenv()
 nest_asyncio.apply()
 cli = AsyncTyper()
@@ -52,6 +59,8 @@ fake = faker.Faker()
 
 timeout = httpx.Timeout(30.0, connect=30.0)
 
+STYLE = {}
+KEYBINDINGS = {}
 
 @cli.command(name="init", help="Start Your Dino Journey!")
 def initialise():
@@ -59,6 +68,7 @@ def initialise():
     
     load_dotenv()
     #TODO customise location of db_path
+    #TODO ask user for their name
     
     path_to_db = os.getenv("PATH_TO_DB")
     if path_to_db:
@@ -73,7 +83,8 @@ def initialise():
         else:
             raise DBWriteError("Unable to write to this database on initialisation")
     else:
-        p = "~/Dinodex/dinodex.db"
+        home_path = "~/" if os.name == "posix" else "C:\\"
+        p = f"~/Dinodex/dinodex.db"
         path_to_db = os.path.expanduser(p)
         db_build(path_to_db, path_to_schema="src/assets/schema.sql")
         if write_permission_check(path_to_db):
@@ -178,8 +189,16 @@ async def collect(gui:Annotated[bool, typer.Option(help="Explore collection with
 
 @cli.command(name="config", help="Configure your Dino collection")
 def config():
+    name = inquirer.text(message="What's your name?", qmark="🦖")
+    image_save = ""
     
-    ...
+    config = {
+        "image_save":image_save,
+        "name":name,
+    }
+    
+    with open("config.json", "w") as f:
+        json.dump(config, f)
 
 @cli.command(name="gallery", help="All your dino pics!")
 def gallery():
@@ -190,6 +209,9 @@ def gallery():
             curr = conn.cursor()
             curr.execute("SELECT image, name FROM myDinos",)
             r = curr.fetchall()
+            if len(r) == 0:
+                print("You have no photographed dinos!")
+                break
             for dino in r:
                 ascii_dino = ascii_dino_from_db(dino[0])
                 name = dino[1]
@@ -209,7 +231,10 @@ def option_cli():
             curr.execute("SELECT name, species, description FROM mydinos")
             r = curr.fetchall()
             choices = [f[0] for f in r]
-            which_dino = inquirer.select(message="Your Dinos!",choices=choices).execute()
+            if len(choices) == 0:
+                print("You have caught no dinos!")
+                return
+            which_dino = inquirer.select(qmark="🦖",message="Your Dinos!",choices=choices).execute()
             print(which_dino)
             curr.execute(f"SELECT image FROM myDinos WHERE name = '{which_dino}'",)
             r = curr.fetchone()
@@ -218,14 +243,6 @@ def option_cli():
             time.sleep(5)
             curr.close()
     
-    return which_dino
-
-# def view():
-    
-    # option_cli()
-    # return which_dino    
-    # sel = Prompt.ask("Which Dino!", choices=choices, console=cons)
-        
     
 
 @cli.command(name="dinofight!", help="Fight!")
@@ -236,9 +253,27 @@ def dinofight():
 @cli.command(name="export", help="Export your dinodex!")
 def exportDinodex():
     
-    ...
+    where_to = inquirer.filepath(
+        qmark="🦖",
+        message="Where to?",
+        validate=PathValidator(is_dir=True, 
+            message="Please select a directory")
+    ).execute()
+    p = "src/dinodex.db"
+    my_baselocation = Path(p)
+    user_name = "Betty_Dino_Lover"
+    dinodex_suff = ".dino"
+    db_change = os.path.expanduser(f"{where_to}/{user_name}{dinodex_suff}")
+    my_baselocation.touch()
+    shutil.copy2(my_baselocation, db_change)
 
 @cli.command(name="import", help="Import a dinodex!")
 def importDinodex():
-    
-    ... 
+    where_from = inquirer.filepath(
+        message="Where from?",
+        validate=PathValidator(is_file=True, 
+            message="Please select a file")
+    ).execute()
+    p = "src/dinodex.db"
+    my_baselocation = Path(p)
+    shutil.copy2(where_from, p)
