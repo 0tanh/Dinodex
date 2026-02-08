@@ -6,6 +6,7 @@ Writing to db functions.
 import io
 import os
 import sqlite3
+import json
 
 import ascii_magic
 import requests
@@ -213,6 +214,24 @@ def ascii_dino_from_db(blob):
     dino_pil = Image.open(workable)
     ascii_dino = ascii_magic.from_pillow_image(dino_pil)
     return ascii_dino
+
+p = "~/Dinodex/dinodex.db"
+WORKING_DB = os.path.expanduser(p)
+CONFIG_PATH = os.path.expanduser("~/Dinodex/config.json")
+
+class Config:
+    def __init__(self, data):
+        self.name = data["name"]
+        self.image_save = data["image_save"]
+        self.images_path = data["images_path"]
+        self.dinodex_path = data["dinodex_path"]
+
+def load_config()->Config:
+    with open(CONFIG_PATH, "r") as con:
+        f = json.load(con)
+    
+    config = Config(f)
+    return Config
     
 
 if __name__ == "__main__":

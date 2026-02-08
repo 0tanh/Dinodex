@@ -17,7 +17,6 @@ from InquirerPy.validator import PathValidator
 from InquirerPy.base.control import Choice
 from InquirerPy.separator import Separator
 
-
 from PIL import UnidentifiedImageError
 
 from typing import Annotated
@@ -26,7 +25,6 @@ from async_typer import AsyncTyper
 
 from rich.console import Console
 from rich.live import Live 
-
 
 import ascii_magic
 
@@ -41,15 +39,19 @@ from ..db.writing import (db_build,
     ascii_dino_from_url,
     write_permission_check,
     ascii_dino_from_db,
-    DBWriteError
+    WORKING_DB,
+    CONFIG_PATH,
+    DBWriteError,
+    load_config
     )
 
 from ..db.dino_classes import Dinosaur
 
 from ..assets.no_dino import NO_DINO, NO_DINO_IMG_PATH
 
-p = f"~/Dinodex/dinodex.db"
-WORKING_DB = os.path.expanduser(p)
+STYLE = {}
+KEYBINDINGS = {}
+
 
 load_dotenv()
 nest_asyncio.apply()
@@ -59,9 +61,44 @@ fake = faker.Faker()
 
 timeout = httpx.Timeout(30.0, connect=30.0)
 
-STYLE = {}
-KEYBINDINGS = {}
 
+@cli.command(name="config", help="Configure your Dinodex")
+def config():
+    name = inquirer.text(message="What's your name?", qmark="🦖").execute()
+    
+    choices = [
+        Choice(name="Yes",value =True),
+        Choice(name="No",value =False)
+    ]
+    
+    dinodex_path= inquirer.filepath(
+        qmark="🦖",
+        message="Where would you like your dinodex?",
+        validate=PathValidator(is_dir=True, 
+            message="Please select a directory")
+    ).execute()
+    image_save = inquirer.select(qmark="🦖",message="Would you like to save your dino photos seperately?", 
+        choices = choices).execute()
+    
+    if image_save:
+        images_path = inquirer.filepath(
+            qmark="🦖",
+            message="Where would you like to save your images?",
+            validate=PathValidator(is_dir=True, 
+                message="Please select a directory")
+        ).execute()
+    else:
+        images_path = ""
+    config = {
+        "image_save":image_save,
+        "name":name,
+        "images_path":os.path.expanduser(images_path),
+        "dinodex_path": WORKING_DB 
+    }
+    
+    with open(CONFIG_PATH, "w") as f:
+        json.dump(config, f)
+        
 @cli.command(name="init", help="Start Your Dino Journey!")
 def initialise():
     """Rebuilds Database from scratch and initialises your user"""
@@ -83,7 +120,6 @@ def initialise():
         else:
             raise DBWriteError("Unable to write to this database on initialisation")
     else:
-        home_path = "~/" if os.name == "posix" else "C:\\"
         p = f"~/Dinodex/dinodex.db"
         path_to_db = os.path.expanduser(p)
         db_build(path_to_db, path_to_schema="src/assets/schema.sql")
@@ -187,19 +223,6 @@ async def collect(gui:Annotated[bool, typer.Option(help="Explore collection with
             return NO_DINO
 
 
-@cli.command(name="config", help="Configure your Dino collection")
-def config():
-    name = inquirer.text(message="What's your name?", qmark="🦖")
-    image_save = ""
-    
-    config = {
-        "image_save":image_save,
-        "name":name,
-    }
-    
-    with open("config.json", "w") as f:
-        json.dump(config, f)
-
 @cli.command(name="gallery", help="All your dino pics!")
 def gallery():
     console = Console()
@@ -243,7 +266,6 @@ def option_cli():
             time.sleep(5)
             curr.close()
     
-    
 
 @cli.command(name="dinofight!", help="Fight!")
 def dinofight():
@@ -261,9 +283,11 @@ def exportDinodex():
     ).execute()
     p = "src/dinodex.db"
     my_baselocation = Path(p)
-    user_name = "Betty_Dino_Lover"
+    config = load_config()
+    
+    user_name = config.name
     dinodex_suff = ".dino"
-    db_change = os.path.expanduser(f"{where_to}/{user_name}{dinodex_suff}")
+    db_change = os.path.expanduser(f"{where_to}/{user_name}_dex{dinodex_suff}")
     my_baselocation.touch()
     shutil.copy2(my_baselocation, db_change)
 
