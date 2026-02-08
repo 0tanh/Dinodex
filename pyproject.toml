@@ -1,7 +1,7 @@
 [project]
 name = "compiling-python-to-c"
 version = "0.1.0"
-description = "Add your description here"
+description = "Dinodex! An interactive terminal based dinosaur pokedex"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -41,6 +41,8 @@ dependencies = [
     "questionary>=2.1.1",
     "requests==2.32.5",
     "rich==14.3.1",
+    "ruff>=0.15.0",
+    "setuptools>=82.0.0",
     "shellingham==1.5.4",
     "textual==7.5.0",
     "textual-image==0.8.5",
@@ -51,3 +53,4 @@ dependencies = [
     "yarl==1.22.0",
     "zstandard==0.25.0",
 ]
+

@@ -4,8 +4,7 @@ from textual.app import RenderResult, ComposeResult
 from textual.strip import Strip 
 from textual.reactive import  reactive
 from textual.containers import  Container
-from rich.live import Live
-from textual.screen import Screen, ModalScreen
+from textual.screen import Screen
 
 from src.assets.no_dino import NO_DINO
 
@@ -25,7 +24,7 @@ class Dino_Info_Reactive(Static):
     def __init__(self, dino:Dinosaur|None, id=''):
         super().__init__()
         self.id = id
-        self.dino = dino
+        # self.dino = dino
     
     def render(self)->RenderResult:
         return ""
@@ -76,8 +75,8 @@ class Dino_Pic(Screen):
     
     def __init__(self):
             super().__init__()
-            self.id = id
-            self.dino = dino
+            # self.id = id
+            # self.dino = dino
 
     def compose(self):
         yield Static(self.dino_pic)

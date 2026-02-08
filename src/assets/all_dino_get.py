@@ -1,7 +1,5 @@
-import asyncio
 import sqlite3
 import requests
-import httpx
 import json
 
 def get_all_d():

@@ -2,7 +2,6 @@ import ascii_magic
 from dotenv import load_dotenv
 import os
 
-from rich.console import Console
 
 from ..db.dino_classes import Dinosaur
 

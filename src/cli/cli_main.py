@@ -1,5 +1,4 @@
 import os
-import json
 import shutil
 from pathlib import Path
 import time
@@ -379,7 +378,11 @@ def dino_config():
 def exportDinodex():
     """Export your dino dex collection"""
     config = load_config()
-    
+    collection_name = inquirer.text(
+        qmark="🦖",
+        amark="🦕",
+        message="What's the name of this collection?"
+    ).execute()
     where_to = inquirer.filepath(
         qmark="🦖",
         amark="🦕",
@@ -391,8 +394,8 @@ def exportDinodex():
     my_baselocation = Path(p)
     
     user_name = config.name
-    dinodex_suff = ".dino"
-    db_change = os.path.expanduser(f"{where_to}/{user_name}_dex{dinodex_suff}")
+    dinodex_suff = ".dex"
+    db_change = os.path.expanduser(f"{where_to}/{user_name}_{collection_name}{dinodex_suff}")
     my_baselocation.touch()
     shutil.copy2(my_baselocation, db_change)
     console.print("You have exported a [green]dinodex[/green]!")
@@ -403,14 +406,13 @@ def importDinodex():
     where_from = inquirer.filepath(
         qmark="🦖",
         amark="🦕",
-        instruction="Please select a .dino file!",
+        instruction="Please select a .dex file!",
         message="Where from?",
         validate=PathValidator(is_file=True, 
             message="Please select a file")
     ).execute()
     
     full_path = os.path.expanduser(where_from)
-    p = Path(config.dinodex_path).with_suffix(".db")
     
     shutil.copy2(full_path, config.dinodex_path)
     print("You have imported a new dinodex!")

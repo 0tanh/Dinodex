@@ -1,18 +1,13 @@
 import httpx
-import textual
-import typer
-from rich import panel
 from textual import on
-from textual.app import App, ComposeResult
-from textual.containers import Grid, ItemGrid
-from textual.widgets import Button, Footer, Header, Static
-from textual_image.widget.sixel import Image
-import ascii_magic
+from textual.app import App
+from textual.containers import Grid
+from textual.widgets import Button, Footer, Header
 
 from rich.console import Console
 
 from ..cli.cli_main import collect
-from ..widget.Dino_Widgets import Dino_Info, Dino_Info_Reactive, Dino_Pic, MatrixNoise, Dino_Ascii, Dino_Ascii_Reactive
+from ..widget.Dino_Widgets import Dino_Info_Reactive, Dino_Ascii_Reactive
 from ..db.writing import ascii_dino_from_url, which_path_to_images
 
 class Dinodex(App):

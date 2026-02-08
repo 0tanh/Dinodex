@@ -5,7 +5,6 @@ Writing to db functions.
 import io
 import os
 import sqlite3
-import json
 
 import ascii_magic
 import requests
@@ -17,8 +16,7 @@ from rich.console import Console
 
 from src.assets.no_dino import (
     NO_DINO_ASCII, 
-    NO_DINO_IMG_PATH, 
-    NO_DINO)
+    NO_DINO_IMG_PATH)
 
 from ..config.config import (
     Config,
