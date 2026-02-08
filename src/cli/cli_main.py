@@ -3,7 +3,6 @@ import json
 import shutil
 from pathlib import Path
 import time
-import io
 import sqlite3
 import httpx
 from dotenv import load_dotenv
@@ -34,6 +33,7 @@ from ..db.writing import (db_build,
     log_req, 
     which_path_to_db, 
     which_path_to_images,
+    which_path_to_config,
     image_write,
     new_dino,
     ascii_dino_from_url,
@@ -42,7 +42,7 @@ from ..db.writing import (db_build,
     WORKING_DB,
     PATH_TO_CONFIG,
     DBWriteError,
-    load_config
+    load_config,
     )
 
 from ..db.dino_classes import Dinosaur
@@ -64,7 +64,17 @@ timeout = httpx.Timeout(30.0, connect=30.0)
 
 @cli.command(name="config", help="Configure your Dinodex")
 def dino_config():
-    name = inquirer.text(message="What's your name?", qmark="🦖").execute()
+    old_db_path = ""
+    old_images_path = ""
+    path_to_config = which_path_to_config()
+    if os.path.exists(path_to_config):
+        print("Reconfiguring...")
+        config = load_config()
+        old_db_path = config.dinodex_path
+        old_images_path = config.images_path
+    
+    
+    name = inquirer.text(message="What's your name?", qmark="🦖", amark="🦕").execute()
     
     choices = [
         Choice(name="Yes",value =True),
@@ -73,16 +83,24 @@ def dino_config():
     
     dinodex_path= inquirer.filepath(
         qmark="🦖",
+        amark="🦕",
         message="Where would you like your dinodex?",
         validate=PathValidator(is_dir=True, 
             message="Please select a directory")
     ).execute()
-    image_save = inquirer.select(qmark="🦖",message="Would you like to save your dino photos seperately?", 
+    
+    full_dino_path = os.path.expanduser(dinodex_path)
+    
+    if not os.path.exists(full_dino_path):
+        os.mkdir(full_dino_path)
+    
+    image_save = inquirer.select(qmark="🦖", amark="🦕",message="Would you like to save your dino photos seperately?", 
         choices = choices).execute()
     
     if image_save:
         images_path = inquirer.filepath(
             qmark="🦖",
+            amark="🦕",
             message="Where would you like to save your images?",
             validate=PathValidator(is_dir=True, 
                 message="Please select a directory")
@@ -93,11 +111,17 @@ def dino_config():
         "image_save":image_save,
         "name":name,
         "images_path":os.path.expanduser(images_path),
-        "dinodex_path": WORKING_DB 
+        "dinodex_path": f"{full_dino_path}/dinodex.db" 
     }
     
-    with open(PATH_TO_CONFIG, "w") as f:
+    if os.path.exists(path_to_config):
+        shutil.move(old_db_path, full_dino_path)
+        if images_path:
+            shutil.move(old_images_path, images_path)
+    
+    with open(path_to_config, "w") as f:
         json.dump(config, f)
+    
         
 @cli.command(name="init", help="Start Your Dino Journey!")
 def initialise():
@@ -107,8 +131,8 @@ def initialise():
     dino_config()
     
     config = load_config()
-    
-    path_to_db = os.getenv("PATH_TO_DB")
+    #TODO readd the b here to fix
+    path_to_db = os.getenv("PATH_TO_D") 
     if path_to_db:
         print("Test Env..")
         if os.path.exists(path_to_db):
@@ -121,7 +145,7 @@ def initialise():
         else:
             raise DBWriteError("Unable to write to this database on initialisation")
     else:
-        path_to_db = f"{config.dinodex_path}/Dinodex/dinodex.db"
+        path_to_db = f"{config.dinodex_path}"
         db_build(path_to_db, path_to_schema="src/assets/schema.sql")
         if write_permission_check(path_to_db):
            return
@@ -132,8 +156,9 @@ def initialise():
 async def collect(gui:Annotated[bool, typer.Option(help="Explore collection with a GUI")]= False):
     """Collect a dinosaur!"""
     # spin = Spinner(name="Looking for dinos...", style="dots")
+    config = load_config()
     
-    path_to_db = which_path_to_db()
+    path_to_db = which_path_to_db(config)
     if gui:
         try:
             async with httpx.AsyncClient() as client:
@@ -151,11 +176,11 @@ async def collect(gui:Annotated[bool, typer.Option(help="Explore collection with
                 str(elapsed),collected_date,path_to_db)
             dino_son =  x.json()
             dino_obj = Dinosaur(dino_son, name, collected_date)
-            img_path = which_path_to_images(dino_obj.imageURL)
+            img_path = which_path_to_images(dino_obj.imageURL, config)
             
             img_response = image_write(img_path, dino_obj.imageURL)
             if write_permission_check(path_to_db):
-                new_dino(dino_obj, path_to_db, img_path, img_response)
+                new_dino(dino_obj, path_to_db, img_path, img_response, config)
             else:
                       
                 raise DBWriteError("Unable to log new dino")
@@ -168,7 +193,7 @@ async def collect(gui:Annotated[bool, typer.Option(help="Explore collection with
         except httpx.ReadTimeout:
             print("Search unsuccessful...")
             dino_obj = NO_DINO
-            img_path = which_path_to_images(dino_obj.imageURL)
+            img_path = which_path_to_images(dino_obj.imageURL, config)
             dino_ascii = ascii_dino_from_url(img_path=img_path, img_url=dino_obj.imageURL)
             gui_collect = Dinodex_Collect(dino_obj, dino_ascii)
             
@@ -194,7 +219,7 @@ async def collect(gui:Annotated[bool, typer.Option(help="Explore collection with
                     
                     dino_son =  x.json()
                     dino_obj = Dinosaur(dino_son, name, collected_date)
-            img_path = which_path_to_images(dino_obj.imageURL)
+            img_path = which_path_to_images(dino_obj.imageURL, config)
             
             print(dino_obj.name)
             print(dino_obj.description)
@@ -212,7 +237,7 @@ async def collect(gui:Annotated[bool, typer.Option(help="Explore collection with
                     case 404:
                         print("We couldn't find a picture of this dino...")
             if write_permission_check(path_to_db):
-                new_dino(dino_obj, path_to_db, img_path, img_response)
+                new_dino(dino_obj, path_to_db, img_path, img_response, config)
             else:
                 raise DBWriteError("Unable to log new dino")
              
@@ -226,7 +251,8 @@ async def collect(gui:Annotated[bool, typer.Option(help="Explore collection with
 @cli.command(name="gallery", help="All your dino pics!")
 def gallery():
     console = Console()
-    path_to_db = which_path_to_db()
+    config = load_config()
+    path_to_db = which_path_to_db(config)
     while True:
         with sqlite3.connect(path_to_db) as conn:
             curr = conn.cursor()
@@ -242,12 +268,12 @@ def gallery():
                 print(name)
                 time.sleep(5)
             curr.close()
-    ...
 
-@cli.command(name="mydino", help="mydino <3")
-def option_cli():
+@cli.command(name="mydinos", help="mydinos <3")
+def my_dino_cli():
     console = Console()
-    path_to_db = which_path_to_db()
+    config = load_config()
+    path_to_db = which_path_to_db(config)
     while True:
         with sqlite3.connect(path_to_db) as conn:
             curr = conn.cursor()
@@ -257,7 +283,7 @@ def option_cli():
             if len(choices) == 0:
                 print("You have caught no dinos!")
                 return
-            which_dino = inquirer.select(qmark="🦖",message="Your Dinos!",choices=choices).execute()
+            which_dino = inquirer.select(qmark="🦖",amark= "🦕",message="Your Dinos!",choices=choices).execute()
             print(which_dino)
             curr.execute(f"SELECT image FROM myDinos WHERE name = '{which_dino}'",)
             r = curr.fetchone()
@@ -274,16 +300,18 @@ def dinofight():
 
 @cli.command(name="export", help="Export your dinodex!")
 def exportDinodex():
+    """Export your dino dex collection"""
+    config = load_config()
     
     where_to = inquirer.filepath(
         qmark="🦖",
+        amark="🦕",
         message="Where to?",
         validate=PathValidator(is_dir=True, 
             message="Please select a directory")
     ).execute()
     p = "src/dinodex.db"
     my_baselocation = Path(p)
-    config = load_config()
     
     user_name = config.name
     dinodex_suff = ".dino"
@@ -293,11 +321,16 @@ def exportDinodex():
 
 @cli.command(name="import", help="Import a dinodex!")
 def importDinodex():
+    config = load_config()
     where_from = inquirer.filepath(
+        qmark="🦖",
+        amark="🦕",
+        instruction="Please select a .dino file!",
         message="Where from?",
         validate=PathValidator(is_file=True, 
             message="Please select a file")
     ).execute()
-    p = "src/dinodex.db"
-    my_baselocation = Path(p)
-    shutil.copy2(where_from, p)
+    full_path = os.path.expanduser(where_from)
+    p = config.dinodex_path
+    shutil.copy2(full_path, p)
+    print("You have imported a new dinodex!")

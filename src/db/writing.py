@@ -2,6 +2,7 @@
 Writing to db functions. 
 
 """
+import configparser
 import io
 import os
 import sqlite3
@@ -16,16 +17,41 @@ from PIL import Image
 from src.assets.no_dino import NO_DINO, NO_DINO_ASCII, NO_DINO_IMG_PATH
 
 from .dino_classes import Dinosaur
+full_path = os.path.expanduser("~/Dinodex")
+
+if not os.path.exists(full_path):
+    os.mkdir(full_path)
 
 p = "~/Dinodex/dinodex.db"
 WORKING_DB = os.path.expanduser(p)
 PATH_TO_CONFIG = os.path.expanduser("~/Dinodex/config.json")
 
 class DBWriteError(Exception):
+    """Custom exception for failing to write a database"""
     def __init__(self, message):
         self.message = message
         super().__init__(self.message)
 
+class Config:
+    """Config object
+    """
+    def __init__(self, data):
+        self.name = data["name"]
+        self.image_save = data["image_save"]
+        self.images_path = data["images_path"]
+        self.dinodex_path = data["dinodex_path"]
+
+def load_config()->Config:
+    """loads to current config
+
+    Returns:
+        Config: current config 
+    """
+    with open(PATH_TO_CONFIG, "r") as con:
+        f = json.load(con)
+    
+    config = Config(f)
+    return config 
 
 def write_permission_check(path_to_db):
     """Diagnostic test to check if this place has write permissions
@@ -77,35 +103,39 @@ def image_write(img_path: str, img_url: str) -> int:
     return pic_res.status_code
 
 
-def which_path_to_db() -> str:
+def which_path_to_db(config:Config) -> str:
     """Where the database is!! should change in binary vs development"""
     load_dotenv()
-    config = load_config()
     path_env = os.getenv("PATH_TO_DB")
     if path_env:
         path_to_db = path_env
-        return path_to_db
     else:
-        p = "~/Dinodex/dinodex.db"
-        path_to_db = os.path.expanduser(p)
-        return path_to_db
+        path_to_db = config.dinodex_path
+    return path_to_db
 
+def which_path_to_config()->str:
+    load_dotenv()
+    path_env = os.getenv("PATH_TO_CONFIG")
+    if path_env:
+        path_to_config = path_env
+    else:
+        path_to_config = PATH_TO_CONFIG
+    return path_to_config
 
-def which_path_to_images(img_url: str) -> str:
+def which_path_to_images(img_url: str, config: Config) -> str:
     """Where Images are being written to! should be different for binary vs dev"""
     load_dotenv()
     config = load_config()
     name = os.path.basename(img_url)
     path_env = os.getenv("PATH_TO_IMG")
     if path_env:
+        print("Testing environment")
         path_to_img = f"{path_env}{name}"
         return path_to_img
     else:
+        path_to_img = f"{config.images_path}{name}"
         
-        p = "~/Dinodex/images/"
-        path_to_img = f"{os.path.expanduser(p)}{name}"
-        
-        return path_to_img
+    return path_to_img
 
 
 def db_build(path_to_db: str, path_to_schema: str):
@@ -147,7 +177,7 @@ def log_req(request, response, status, url, elapsed, collected_date, path_to_db)
         curr.close()
 
 
-def new_dino(dino: Dinosaur, path_to_db, img_path, img_response):
+def new_dino(dino: Dinosaur, path_to_db:str, img_path:str, img_response, config:Config):
     load_dotenv()
     match img_response:
         case 200:
@@ -181,7 +211,8 @@ def new_dino(dino: Dinosaur, path_to_db, img_path, img_response):
             )
 
         curr.close()
-    remove_image(img_path)
+    if not config.image_save:
+        remove_image(img_path)
 
 
 def remove_image(img_path) -> None:
@@ -225,27 +256,6 @@ def ascii_dino_from_db(blob):
     dino_pil = Image.open(workable)
     ascii_dino = ascii_magic.from_pillow_image(dino_pil)
     return ascii_dino
-
-class Config:
-    """Config object
-    """
-    def __init__(self, data):
-        self.name = data["name"]
-        self.image_save = data["image_save"]
-        self.images_path = data["images_path"]
-        self.dinodex_path = data["dinodex_path"]
-
-def load_config()->Config:
-    """loads to current config
-
-    Returns:
-        Config: current config 
-    """
-    with open(PATH_TO_CONFIG, "r") as con:
-        f = json.load(con)
-    
-    config = Config(f)
-    return config 
     
 
 if __name__ == "__main__":

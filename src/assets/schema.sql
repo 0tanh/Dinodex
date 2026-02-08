@@ -22,3 +22,8 @@ CREATE TABLE allDinos (
     rare BOOL,
     collected_date TEXT
 )
+
+CREATE TABLE stats (
+    catches INT,
+    unsucessful INT
+)
