@@ -8,6 +8,8 @@ Collect dino ascii's, and share them with your friends.
 
 View a gallery of your dinos, and learn more about these beasts of yore!
 
-## Compile 
+## Compile & Build
+**REQUIRES** 
+[uv](https://github.com/astral-sh/uv)
 
 run the included quickbuild.sh file to build you dinodex
