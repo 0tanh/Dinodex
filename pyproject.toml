@@ -72,7 +72,7 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 # "mypackage" = ["assets/*.json", "assets/*.png", "assets/*.sql"]
-assets = ["*.png"]
+assets = ["*.png", "*.sql"]
 
 
 

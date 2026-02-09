@@ -6,6 +6,8 @@ from InquirerPy import inquirer
 from InquirerPy.validator import PathValidator
 from InquirerPy.base.control import Choice
 from dotenv import load_dotenv
+from importlib import resources
+
 
 load_dotenv()
 
@@ -13,9 +15,9 @@ path_env = os.getenv("PATH_TO_CONFIG")
 
 if path_env:
     PATH_TO_CONFIG = path_env
-
+schema_path = resources.files("assets").joinpath("schema.sql")
 PATH_TO_CONFIG = os.path.expanduser("~/Dinodex/config.json")
-
+PATH_TO_SCHEMA = schema_path
 class Config:
     """Config object
     """

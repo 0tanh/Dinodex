@@ -32,6 +32,7 @@ from gui.gui_collect import Dinodex_Collect
 
 from config.config import (
     PATH_TO_CONFIG,
+    PATH_TO_SCHEMA,
     config_to_dict,
     name_config,
     images_path_config,
@@ -89,7 +90,7 @@ def initialise():
         if os.path.exists(path_to_db):
             print("removing old Db")
             os.remove(path_to_db)
-        db_build(path_to_db, path_to_schema="src/assets/schema.sql")
+        db_build(path_to_db, path_to_schema=PATH_TO_SCHEMA)
         
         if write_permission_check(path_to_db):
             pass
@@ -102,7 +103,7 @@ def initialise():
             raise DBWriteError("Unable to write to this database on initialisation")
     
     console.print(f"Welcome to the dinodex [bold]{config.name}[/bold]! \n")
-    console.print("Run [italics] ]dinodex collect [/italics] to start collecting dinos\n")
+    console.print("Run [italics bold] dinodex collect [/italics bold] to start collecting dinos\n")
     console.print("Dinos can be very shy, so sometimes you have to look around for a bit before you see a dino...")
 
 @cli.async_command(name="collect", help="Collect a new Dinosaur!")
@@ -182,7 +183,7 @@ async def collect(gui:Annotated[bool, typer.Option(help="Explore collection with
             # print(".",end="")
             # time.sleep(3)
             # print(".",end="")
-            time.sleep(3)
+            # time.sleep(3)
             
             name = f"[bold green]{dino_obj.name}[/bold green]"
             
@@ -193,7 +194,7 @@ async def collect(gui:Annotated[bool, typer.Option(help="Explore collection with
             desc_copy = f"[italics]{dino_obj.description}[/italics]"
             
             # print(name_copy)
-            with Live(Panel(""),console=console, refresh_per_second=0.05) as live:
+            with Live(Panel(""),console=console, refresh_per_second=2) as live:
                 dino_str = ""
                 for c in desc_copy:
                     dino_str += c
@@ -202,9 +203,7 @@ async def collect(gui:Annotated[bool, typer.Option(help="Explore collection with
                         subtitle=dino_obj.species,
                         padding=(1,1),
                         safe_box=True),refresh=True)
-                    time.sleep(0.00001)
                     
-            # print(dino_obj.description)
             
             with console.status("Photographing dino ..."):
                 img_response = image_write(img_path, dino_obj.imageURL)
@@ -268,10 +267,22 @@ def gallery():
         for dino in r:
             ascii_dino = ascii_dino_from_db(dino[0])
             name = dino[1]
-            console.print(ascii_dino.to_ascii(enhance_image=True))
-            print(name)
-            console.print(f"[bold blue][link={dino[2]}]View here[/link][/bold blue]")
-            time.sleep(5)
+            
+            with Live(Panel(""),console=console, refresh_per_second=4) as live:
+                stringy_dino = ascii_dino.to_ascii(enhance_image=True)
+                dino_str = ""
+                for c in stringy_dino:
+                    dino_str += c
+                    live.update(Panel(dino_str, 
+                        title=name, 
+                        subtitle=dino[3],
+                        padding=(1,1),
+                        safe_box=True),refresh=True)
+                    # time.sleep(0.00001)
+            # print(name)
+            console.print(f"[bold blue][link={dino[2]}]View an HD version here[/link][/bold blue]")
+            print("\n")
+            time.sleep(3)
             i += 1
 
 @cli.command(name="mydinos", help="Look through your dinos!")
@@ -293,9 +304,9 @@ def my_dino_cli():
             
             choices.append("Quit")
             
-            which_dino = inquirer.select(qmark="🦖",amark= "🦕",message="Your Dinos!",choices=choices).execute()
+            which_dino = inquirer.select(qmarkan HD version ="🦖",amark= "🦕",message="Your Dinos!",choices=choices).execute()
             print(which_dino)
-            if which_dino == "Quit":
+            if which_dino == "Quit3:
                 curr.close()
                 return
             else:
@@ -372,8 +383,40 @@ def dino_config():
                 config_write(path_to_config, data)
     else:
        all_config(path_to_config) 
-        
 
+@cli.command(name="exportdino",help="Export a single dino")
+def exportSingle():
+    console = Console()
+    config = load_config()
+    path_to_db = which_path_to_db(config)
+    
+    
+    
+    while True:
+        print(f"{config.name}'s dinodex")
+        with sqlite3.connect(path_to_db) as conn:
+            curr = conn.cursor()
+            curr.execute("SELECT name, species, description FROM mydinos")
+            r = curr.fetchall()
+            choices = [f[0] for f in r]
+            if len(choices) == 0:
+                print("You have caught no dinos!")
+                print_no_dino()
+                return
+            
+            choices.append("Quit")
+            
+            which_dino = inquirer.select(qmarkan HD version ="🦖",amark= "🦕",message="Your Dinos!",choices=choices).execute()
+            print(which_dino)
+            if which_dino == "Quit":
+                curr.close()
+                return
+            else:
+                curr.execute(f"CREATE TABLE SELECT name, species, image, imageURL, description, collected_date FROM myDinos WHERE name = '{which_dino}'",)
+                r = curr.fetchone()
+                
+                curr.close()
+    ...
 
 @cli.command(name="export", help="Export your dinodex!")
 def exportDinodex():
